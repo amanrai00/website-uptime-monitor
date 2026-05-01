@@ -129,7 +129,7 @@ Set all of the following on the Lambda function configuration:
 - [x] `RESPONSE_THRESHOLD_MS` — default `3000`
 - [x] `SNS_TOPIC_ARN` — ARN from step 1.3
 - [x] `DYNAMODB_TABLE` — default `website_checks`
-- [ ] `S3_BUCKET` — optional until Phase 2; set after the dashboard bucket is created
+- [x] `S3_BUCKET` — optional until Phase 2; set after the dashboard bucket is created
 - [x] `S3_STATUS_KEY` — default `status.json`
 - [x] `SITE_ID` — short identifier for the site, e.g. `my-portfolio`
 
@@ -169,35 +169,39 @@ Run each test in order. Do not proceed to Phase 2 until all pass.
 
 ### 2.1 S3 Bucket Setup
 
-- [ ] Create S3 bucket: `<yourname>-uptime-dashboard`
-- [ ] Enable static website hosting on the bucket
+- [x] Create S3 bucket: `amanrai00-uptime-dashboard`
+- [x] Enable static website hosting on the bucket
   - Index document: `index.html`
-- [ ] Set bucket policy: public `s3:GetObject` for the dashboard assets required for static hosting (`index.html`, `style.css`, `app.js`, `status.json`)
-- [ ] Disable “Block all public access” only to the extent required for static hosting
-- [ ] **Update the IAM role policy** (`uptime-monitor-lambda-role`) — replace the placeholder bucket ARN set in Phase 1.1 with the real ARN: `arn:aws:s3:::<yourname>-uptime-dashboard/status.json`. Verify the policy still grants `s3:PutObject` on that specific key only and nothing broader.
-- [ ] Update Lambda environment variable `S3_BUCKET` with the bucket name
-- [ ] Confirm Lambda can write `status.json` (run a manual test invoke after updating the env var)
+- [x] Set bucket policy: public `s3:GetObject` for the dashboard assets required for static hosting (`index.html`, `style.css`, `app.js`, `status.json`)
+- [x] Disable “Block all public access” only to the extent required for static hosting
+- [x] **Update the IAM role policy** (`uptime-monitor-lambda-role`) — replace the placeholder bucket ARN set in Phase 1.1 with the real ARN: `arn:aws:s3:::amanrai00-uptime-dashboard/status.json`. Verify the policy still grants `s3:PutObject` on that specific key only and nothing broader.
+- [x] Update Lambda environment variable `S3_BUCKET` with the bucket name
+- [x] Confirm Lambda can write `status.json` (run a manual test invoke after updating the env var)
 
 ### 2.2 Dashboard Build
 
-- [ ] Create `dashboard/index.html` with:
-  - [ ] `fetch('status.json?t=' + Date.now())` on page load to prevent browser caching
-  - [ ] Display status badge: green UP or red DOWN based on `is_success`
-  - [ ] Display last checked time in human-readable local format
-  - [ ] Display latest HTTP status code
-  - [ ] Display latest `response_time_ms` with colour coding (green under 800ms, amber under 2000ms, red above)
-  - [ ] Display `failure_reason` block if status is DOWN
-  - [ ] Display `recent_failures` list (up to 5 entries per PRD 13, each with timestamp, status code, response time, reason)
-  - [ ] Auto-refresh every 60 seconds via `setInterval`
-  - [ ] Show a clear error state if `status.json` fails to load
-  - [ ] Show last-checked time prominently so dashboard staleness is always visible (PRD 9.5)
-- [ ] Create `dashboard/style.css` — clean, minimal, professional styling
+- [x] Create `dashboard/index.html` with:
+  - [x] `fetch('status.json?t=' + Date.now())` on page load to prevent browser caching
+  - [x] Display status badge: green UP or red DOWN based on `is_success`
+  - [x] Display last checked time in human-readable local format
+  - [x] Display latest HTTP status code
+  - [x] Display latest `response_time_ms` with colour coding (green under 800ms, amber under 2000ms, red above)
+  - [x] Display `failure_reason` block if status is DOWN
+  - [x] Display `recent_failures` list (up to 5 entries per PRD 13, each with timestamp, status code, response time, reason)
+  - [x] Auto-refresh every 60 seconds via `setInterval`
+  - [x] Show a clear error state if `status.json` fails to load
+  - [x] Show last-checked time prominently so dashboard staleness is always visible (PRD 9.5)
+- [x] Create `dashboard/style.css` — clean, minimal, professional styling
 
 ### 2.3 Phase 2 Validation
 
-- [ ] Open the S3 static website URL in a browser
-- [ ] Confirm dashboard loads and shows correct UP status
-- [ ] Force a failure by temporarily setting `TARGET_URL` to a broken URL, wait one cycle, confirm dashboard shows DOWN
+- [x] Open the S3 static website URL in a browser
+- [x] Confirm dashboard loads and shows correct UP status
+- [x] Force a failure by temporarily setting `TARGET_URL` to a broken URL, wait one cycle, confirm dashboard shows DOWN
+  - [x] Confirm forced failure updates `status.json`
+  - [x] Confirm dashboard shows DOWN status with failure reason
+  - [x] Restore Lambda `TARGET_URL` to working URL after DOWN test
+  - [x] Confirm dashboard returns to UP after restore
 - [ ] Confirm `recent_failures` list populates after failures occur
 - [ ] Confirm last-checked time updates after each Lambda execution
 - [ ] Confirm auto-refresh works after 60 seconds without manual reload

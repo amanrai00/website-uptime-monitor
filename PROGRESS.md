@@ -31,6 +31,8 @@
 - Completed Phase 1 monitoring engine validation and automatic EventBridge schedule.
 - Added Phase 2 S3 dashboard setup guide to README.
 - Built Phase 2 static dashboard files.
+- Created S3 dashboard bucket, uploaded dashboard files, enabled status.json write, and confirmed dashboard loads.
+- Tested dashboard UP and DOWN states successfully.
 
 ## Process Notes / Problems Solved
 
@@ -159,10 +161,40 @@
 - How it was solved: Used static HTML, CSS, and JavaScript with fetch('status.json?t=' + Date.now()).
 - Final result: Dashboard files are ready to upload to S3.
 
+### Phase 2 S3 dashboard setup and verification
+
+- Task name: Phase 2 S3 dashboard setup and verification
+- What was done: Created S3 dashboard bucket, enabled static hosting, uploaded dashboard files, updated bucket policy, updated Lambda IAM permission, added S3_BUCKET, ran Lambda, confirmed status.json, and opened dashboard.
+- Problem faced: Bucket policy could not be saved at first because Block Public Access was still enabled.
+- How it was solved:
+  1. Disabled Block Public Access for this dashboard bucket.
+  2. Added a bucket policy limited to index.html, style.css, app.js, and status.json.
+  3. Replaced placeholder S3 IAM resource with arn:aws:s3:::amanrai00-uptime-dashboard/status.json.
+  4. Added S3_BUCKET=amanrai00-uptime-dashboard to Lambda.
+  5. Ran Lambda manually.
+  6. Confirmed status.json appeared in S3.
+  7. Opened the static website endpoint and confirmed dashboard shows UP.
+- Final result: Static S3 dashboard is live and reading status.json successfully.
+
+### Phase 2 dashboard UP/DOWN validation
+
+- Task name: Phase 2 dashboard UP/DOWN validation
+- What was done: Forced a failure URL, ran Lambda, confirmed dashboard showed DOWN, then restored the working URL and confirmed dashboard returned to UP.
+- Problem faced: Needed to confirm the dashboard reflects status.json changes, not only the initial UP state.
+- How it was solved:
+  1. Temporarily changed TARGET_URL to a broken URL.
+  2. Ran Lambda manually.
+  3. Confirmed status.json updated.
+  4. Refreshed the dashboard and confirmed DOWN state.
+  5. Restored TARGET_URL to https://example.com.
+  6. Ran Lambda again.
+  7. Refreshed the dashboard and confirmed UP state.
+- Final result: Dashboard correctly reflects both UP and DOWN states.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-Upload dashboard files to S3 and configure public read access.
+Commit Phase 2 work and prepare for portfolio screenshots or Phase 3 content validation.
