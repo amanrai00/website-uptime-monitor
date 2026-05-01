@@ -7,7 +7,56 @@
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <script src="app.js"></script>
+    <main class="page-shell">
+      <section class="dashboard" aria-labelledby="dashboard-title">
+        <header class="dashboard-header">
+          <div>
+            <p class="eyebrow">Website Uptime Monitor</p>
+            <h1 id="dashboard-title">Current Site Status</h1>
+          </div>
+          <div id="statusBadge" class="status-badge status-loading" aria-live="polite">Loading</div>
+        </header>
+
+        <section id="messagePanel" class="message-panel" aria-live="polite">
+          Loading latest status...
+        </section>
+
+        <section class="summary-grid" aria-label="Latest monitoring result">
+          <article class="metric-card metric-card-wide">
+            <span class="metric-label">Site URL</span>
+            <a id="siteUrl" class="metric-value link-value" href="#" target="_blank" rel="noreferrer">--</a>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Last Checked</span>
+            <span id="lastChecked" class="metric-value">--</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">HTTP Status</span>
+            <span id="statusCode" class="metric-value">--</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Response Time</span>
+            <span id="responseTime" class="metric-value">--</span>
+          </article>
+        </section>
+
+        <section id="failurePanel" class="failure-panel is-hidden" aria-label="Failure reason">
+          <h2>Failure Reason</h2>
+          <p id="failureReason">--</p>
+        </section>
+
+        <section class="recent-section" aria-labelledby="recent-failures-title">
+          <div class="section-heading">
+            <h2 id="recent-failures-title">Recent Failures</h2>
+            <span id="refreshNote">Refreshes every 60 seconds</span>
+          </div>
+          <ul id="recentFailures" class="failure-list">
+            <li class="empty-state">No recent failures available.</li>
+          </ul>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js" defer></script>
   </body>
 </html>
-

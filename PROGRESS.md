@@ -30,6 +30,7 @@
 - Created EventBridge schedule uptime-check-every-5-min and confirmed automatic Lambda execution.
 - Completed Phase 1 monitoring engine validation and automatic EventBridge schedule.
 - Added Phase 2 S3 dashboard setup guide to README.
+- Built Phase 2 static dashboard files.
 
 ## Process Notes / Problems Solved
 
@@ -150,10 +151,18 @@
 - How it was solved: Documented the manual S3 setup flow in README based on PRD.md and TASKS.md.
 - Final result: Ready to create S3 dashboard resources manually.
 
+### Phase 2 static dashboard build
+
+- Task name: Phase 2 static dashboard build
+- What was done: Created static dashboard files that read status.json from S3.
+- Problem faced: Needed a simple dashboard that works without API Gateway or a backend server.
+- How it was solved: Used static HTML, CSS, and JavaScript with fetch('status.json?t=' + Date.now()).
+- Final result: Dashboard files are ready to upload to S3.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-Create S3 bucket, enable static website hosting, update Lambda IAM/S3_BUCKET, and confirm status.json is written.
+Upload dashboard files to S3 and configure public read access.
