@@ -7,12 +7,12 @@
 
 ## Current Phase
 
-- Phase 2: S3 Dashboard setup not started
+- Phase 2: S3 Dashboard setup in progress
 
 ## Current Status
 
 - Phase 1 completed
-- Phase 2 not started
+- Phase 2 in progress
 
 ## Completed Task History
 
@@ -29,6 +29,7 @@
 - Manually invoked Lambda with a temporary low response threshold and confirmed slow-response failure detection.
 - Created EventBridge schedule uptime-check-every-5-min and confirmed automatic Lambda execution.
 - Completed Phase 1 monitoring engine validation and automatic EventBridge schedule.
+- Added Phase 2 S3 dashboard setup guide to README.
 
 ## Process Notes / Problems Solved
 
@@ -141,10 +142,18 @@
   5. Confirmed automatic scheduled runs are writing successful results to DynamoDB.
 - Final result: Phase 1 is complete and the project is ready for Phase 2.
 
+### Phase 2 S3 dashboard setup guide
+
+- Task name: Phase 2 S3 dashboard setup guide
+- What was done: Added setup guide for S3 static hosting and Lambda status.json write.
+- Problem faced: Needed a clear order before creating the S3 dashboard resources.
+- How it was solved: Documented the manual S3 setup flow in README based on PRD.md and TASKS.md.
+- Final result: Ready to create S3 dashboard resources manually.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-Start Phase 2 S3 dashboard setup.
+Create S3 bucket, enable static website hosting, update Lambda IAM/S3_BUCKET, and confirm status.json is written.

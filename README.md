@@ -108,3 +108,131 @@ Run these checks from the Lambda test page before relying on the schedule:
 - Test with a working URL and confirm a successful result is written to DynamoDB.
 - Test with an HTTP failure URL, such as `https://httpstat.us/500`, and confirm the result is failed and an SNS email is sent.
 - Test with a slow-response URL, such as `https://httpstat.us/200?sleep=5000`, and confirm the result fails when response time exceeds `RESPONSE_THRESHOLD_MS`.
+
+## Phase 2 S3 Dashboard Setup
+
+Use AWS region `ap-northeast-1` for all Phase 2 dashboard resources.
+
+Phase 1 intentionally skipped `S3_BUCKET` because the dashboard bucket did not exist yet. In Phase 2, create the S3 bucket first, then add `S3_BUCKET` to the Lambda configuration so Lambda can write `status.json`.
+
+### 1. Create S3 bucket
+
+- Open the AWS Console.
+- Go to S3.
+- Choose Create bucket.
+- Bucket name: `aman-uptime-dashboard`
+- If that name is unavailable, use a globally unique variation, such as `aman-uptime-dashboard-<short-random-suffix>`.
+- AWS Region: `ap-northeast-1`
+- Keep default settings for now unless a later step says to change them.
+- Create the bucket.
+
+### 2. Enable static website hosting
+
+- Open the new bucket.
+- Go to Properties.
+- Find Static website hosting.
+- Choose Edit.
+- Enable static website hosting.
+- Hosting type: Host a static website.
+- Index document: `index.html`
+- Save changes.
+- Copy the bucket website endpoint. You will use it to open the dashboard later.
+
+### 3. Upload dashboard files
+
+- Open the bucket.
+- Go to Objects.
+- Upload these files from the local `dashboard/` folder:
+  - `index.html`
+  - `style.css`
+  - `app.js`
+- Do not upload unrelated files.
+
+### 4. Configure public read access for required dashboard files only
+
+The dashboard must be publicly readable, but only for the required static files and `status.json`.
+
+- Open the bucket.
+- Go to Permissions.
+- Edit Block public access settings.
+- Disable public access blocking only as needed for this static website bucket.
+- Save changes and confirm.
+- Add a bucket policy that allows public `s3:GetObject` only for:
+  - `index.html`
+  - `style.css`
+  - `app.js`
+  - `status.json`
+
+Use your real bucket name in the resource ARNs:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadDashboardFilesOnly",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": [
+        "arn:aws:s3:::aman-uptime-dashboard/index.html",
+        "arn:aws:s3:::aman-uptime-dashboard/style.css",
+        "arn:aws:s3:::aman-uptime-dashboard/app.js",
+        "arn:aws:s3:::aman-uptime-dashboard/status.json"
+      ]
+    }
+  ]
+}
+```
+
+If you used a different bucket name, replace `aman-uptime-dashboard` in all four ARNs.
+
+### 5. Update Lambda IAM role S3 permission
+
+In Phase 1, the Lambda role used a placeholder S3 ARN for the future dashboard bucket. Replace that placeholder with the real bucket ARN for `status.json`.
+
+- Go to IAM.
+- Open role `uptime-monitor-lambda-role`.
+- Open the inline policy for the Lambda permissions.
+- Find the `s3:PutObject` statement.
+- Replace the placeholder resource with:
+
+```text
+arn:aws:s3:::aman-uptime-dashboard/status.json
+```
+
+If you used a different bucket name, replace `aman-uptime-dashboard` with your real bucket name.
+
+Keep this permission limited to `status.json` only. Do not grant write access to the whole bucket.
+
+### 6. Add S3_BUCKET environment variable to Lambda
+
+- Go to Lambda.
+- Open function `website-uptime-check`.
+- Go to Configuration.
+- Go to Environment variables.
+- Add or update:
+
+|Variable|Value|
+|---|---|
+|`S3_BUCKET`|`aman-uptime-dashboard`|
+|`S3_STATUS_KEY`|`status.json`|
+
+If you used a different bucket name, use that value for `S3_BUCKET`.
+
+### 7. Manually invoke Lambda and confirm status.json is written
+
+- Open the Lambda function `website-uptime-check`.
+- Use the existing manual test event.
+- Invoke the function.
+- Confirm the run succeeds.
+- Open the S3 bucket.
+- Confirm `status.json` exists in the bucket root.
+- Open `status.json` and confirm it contains the latest site status data.
+
+### 8. Open S3 website URL and confirm dashboard loads
+
+- Open the S3 static website endpoint copied from the bucket Properties page.
+- Confirm the dashboard page loads.
+- Confirm it can read `status.json`.
+- Confirm it shows the latest status from the Lambda run.
