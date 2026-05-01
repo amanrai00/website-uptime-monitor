@@ -44,33 +44,33 @@ website-uptime-monitor/
 
 ### 1.1 IAM Role and Policy
 
-- [ ] Create IAM role: `uptime-monitor-lambda-role`
-- [ ] Attach inline policy with least-privilege permissions only:
-  - [ ] `dynamodb:PutItem` on `website_checks` table ARN only
-  - [ ] `sns:Publish` on `uptime-alerts` topic ARN only
-  - [ ] `s3:PutObject` on dashboard bucket ARN, key `status.json` only — use a placeholder ARN now (`arn:aws:s3:::PLACEHOLDER_BUCKET_NAME/status.json`); update to the real bucket ARN in Phase 2.1 once the bucket is created
-  - [ ] `logs:CreateLogGroup`, `logs:CreateLogStream`, `logs:PutLogEvents` for CloudWatch
+- [x] Create IAM role: `uptime-monitor-lambda-role`
+- [x] Attach inline policy with least-privilege permissions only:
+  - [x] `dynamodb:PutItem` on `website_checks` table ARN only
+  - [x] `sns:Publish` on `uptime-alerts` topic ARN only
+  - [x] `s3:PutObject` on dashboard bucket ARN, key `status.json` only — use a placeholder ARN now (`arn:aws:s3:::PLACEHOLDER_BUCKET_NAME/status.json`); update to the real bucket ARN in Phase 2.1 once the bucket is created
+  - [x] `logs:CreateLogGroup`, `logs:CreateLogStream`, `logs:PutLogEvents` for CloudWatch
 - [ ] Verify no broader permissions are attached (no `*` actions, no `*` resources)
 
 ### 1.2 DynamoDB Table
 
-- [ ] Create table: `website_checks`
+- [x] Create table: `website_checks`
   - Partition key: `site_id` (String)
   - Sort key: `check_time` (String, ISO 8601)
   - Billing mode: On-demand
-- [ ] Confirm table is active before proceeding
+- [x] Confirm table is active before proceeding
 - [ ] Note: `content_check_passed` and `expected_text` fields are reserved for Phase 3; no schema change needed now (DynamoDB is schemaless)
 
 ### 1.3 SNS Topic
 
-- [ ] Create SNS topic: `uptime-alerts`
-- [ ] Subscribe your email address to the topic
-- [ ] Confirm the subscription by clicking the link in the confirmation email
-- [ ] Note the topic ARN; you will need it as an environment variable
+- [x] Create SNS topic: `uptime-alerts`
+- [x] Subscribe your email address to the topic
+- [x] Confirm the subscription by clicking the link in the confirmation email
+- [x] Note the topic ARN; you will need it as an environment variable
 
 ### 1.4 Lambda Function
 
-- [ ] Create Lambda function: `website-uptime-check`
+- [x] Create Lambda function: `website-uptime-check`
   - Runtime: Python 3.12
   - Architecture: x86_64
   - Execution role: `uptime-monitor-lambda-role`
@@ -124,42 +124,42 @@ website-uptime-monitor/
 
 Set all of the following on the Lambda function configuration:
 
-- [ ] `TARGET_URL` — full URL to monitor, e.g. `https://example.com`
-- [ ] `TIMEOUT_SECONDS` — default `10`
-- [ ] `RESPONSE_THRESHOLD_MS` — default `3000`
-- [ ] `SNS_TOPIC_ARN` — ARN from step 1.3
-- [ ] `DYNAMODB_TABLE` — default `website_checks`
+- [x] `TARGET_URL` — full URL to monitor, e.g. `https://example.com`
+- [x] `TIMEOUT_SECONDS` — default `10`
+- [x] `RESPONSE_THRESHOLD_MS` — default `3000`
+- [x] `SNS_TOPIC_ARN` — ARN from step 1.3
+- [x] `DYNAMODB_TABLE` — default `website_checks`
 - [ ] `S3_BUCKET` — optional until Phase 2; set after the dashboard bucket is created
-- [ ] `S3_STATUS_KEY` — default `status.json`
-- [ ] `SITE_ID` — short identifier for the site, e.g. `my-portfolio`
+- [x] `S3_STATUS_KEY` — default `status.json`
+- [x] `SITE_ID` — short identifier for the site, e.g. `my-portfolio`
 
 ### 1.6 EventBridge Schedule
 
-- [ ] Create EventBridge rule: `uptime-check-every-5-min`
+- [x] Create EventBridge rule: `uptime-check-every-5-min`
   - Schedule expression: `rate(5 minutes)`
   - Target: `website-uptime-check` Lambda function
-- [ ] Add resource-based policy allowing EventBridge to invoke the Lambda function
+- [x] Add resource-based policy allowing EventBridge to invoke the Lambda function
 - [ ] Note: To change the schedule, update this EventBridge rule in AWS. It is not controlled by an environment variable.
 
 ### 1.7 Phase 1 Validation
 
 Run each test in order. Do not proceed to Phase 2 until all pass.
 
-- [ ] Manually invoke Lambda with a test event using a working URL
-  - Confirm result written to DynamoDB with correct fields
+- [x] Manually invoke Lambda with a test event using a working URL
+  - [x] Confirm result written to DynamoDB with correct fields
   - If the S3 bucket has already been created, confirm `status.json` is written successfully (check S3 console)
-  - Confirm no SNS alert sent (check email)
-  - Confirm CloudWatch log shows structured pass result
-- [ ] Manually invoke Lambda with a broken URL (e.g. `https://httpstat.us/500`)
-  - Confirm result written to DynamoDB with `is_success: false`
+  - [x] Confirm no SNS alert sent (check email)
+  - [x] Confirm CloudWatch log shows structured pass result
+- [x] Manually invoke Lambda with a broken URL (e.g. `https://httpstat.us/500`)
+  - [x] Confirm result written to DynamoDB with `is_success: false`
   - If the S3 bucket has already been created, confirm `status.json` shows `status: DOWN`
-  - Confirm SNS alert email received with correct failure details
-  - Confirm CloudWatch log shows structured fail result
-- [ ] Manually invoke Lambda with a slow-response URL (e.g. `https://httpstat.us/200?sleep=5000`)
-  - Confirm `response_time_ms` exceeds threshold
-  - Confirm check is marked as failed with slow response reason
-- [ ] Wait for one scheduled EventBridge run (up to 5 minutes) and confirm it fires automatically
-  - Check CloudWatch logs for execution triggered by EventBridge (not manual)
+  - [x] Confirm SNS alert email received with correct failure details
+  - [x] Confirm CloudWatch log shows structured fail result
+- [x] Manually invoke Lambda with a slow-response URL (e.g. `https://httpstat.us/200?sleep=5000`)
+  - [x] Confirm `response_time_ms` exceeds threshold
+  - [x] Confirm check is marked as failed with slow response reason
+- [x] Wait for one scheduled EventBridge run (up to 5 minutes) and confirm it fires automatically
+  - [x] Check CloudWatch logs for execution triggered by EventBridge (not manual)
 
 -----
 
