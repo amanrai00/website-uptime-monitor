@@ -4,15 +4,20 @@
 
 - Phase 0: Repository setup
 - Phase 1: Monitoring Engine
+- Phase 2: S3 Dashboard
 
 ## Current Phase
 
-- Phase 2: S3 Dashboard setup in progress
+- LinkedIn Post 5 cost breakdown preparation
 
 ## Current Status
 
 - Phase 1 completed
-- Phase 2 in progress
+- Phase 2 completed
+- S3 dashboard live
+- UP and DOWN dashboard states verified
+- Recent Failures now working
+- Post 6 screenshots are ready
 
 ## Completed Task History
 
@@ -33,6 +38,7 @@
 - Built Phase 2 static dashboard files.
 - Created S3 dashboard bucket, uploaded dashboard files, enabled status.json write, and confirmed dashboard loads.
 - Tested dashboard UP and DOWN states successfully.
+- Verified Recent Failures dashboard fix and confirmed Post 6 screenshots are ready.
 
 ## Process Notes / Problems Solved
 
@@ -225,10 +231,33 @@
 - Final result: Current failed checks are now written into `recent_failures` immediately, DynamoDB query fills older failures, duplicates are removed, and the latest 5 failures are written to status.json.
 - Next step: Deploy Lambda, run failure test, confirm `recent_failures` has at least 1 item, refresh dashboard, take updated DOWN screenshot, restore `TARGET_URL` to healthy URL.
 
+### Recent Failures dashboard fix verification
+
+- Task name: Recent Failures dashboard fix verification
+- What was done: Uploaded the updated Lambda ZIP from VS Code to AWS Lambda, ran the failure test again, confirmed status.json now contains `recent_failures`, refreshed the dashboard, confirmed Recent Failures appears on the DOWN dashboard, restored `TARGET_URL` back to `https://example.com`, ran Lambda again, and confirmed the dashboard returned to UP.
+- Problem faced: The dashboard showed DOWN correctly, but Recent Failures was empty because status.json had `"recent_failures": []`.
+- How it was solved:
+  1. Updated `lambda/app.py` so the current failed check is included directly in `recent_failures`.
+  2. Kept DynamoDB Query for older failures.
+  3. Added dedupe by `check_time`.
+  4. Kept latest 5 failures.
+  5. Added `dynamodb:Query` permission to the Lambda IAM policy.
+  6. Created `lambda-deploy.zip` from VS Code.
+  7. Uploaded the ZIP to AWS Lambda.
+  8. Ran a failure test with `https://example.com/not-found-test`.
+  9. Confirmed status.json contains 5 `recent_failures`.
+  10. Refreshed the dashboard and confirmed Recent Failures displays correctly.
+  11. Restored `TARGET_URL` to `https://example.com`.
+  12. Ran Lambda again and confirmed UP state.
+- Final result: Recent Failures is now fully working. The dashboard correctly shows UP, DOWN, failure reason, and recent failure history. Both Post 6 screenshots are ready.
+- Next step: Prepare LinkedIn Post 5 cost breakdown first, then use the UP and DOWN screenshots for Post 6 dashboard live.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-Commit Phase 2 work and prepare for portfolio screenshots or Phase 3 content validation.
+- Prepare Post 5 cost breakdown.
+- Then prepare Post 6 dashboard live using the completed UP and DOWN screenshots.
+- Continue to Phase 3 content validation if needed.
