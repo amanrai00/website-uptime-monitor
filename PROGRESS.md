@@ -325,13 +325,28 @@
 - Final result: Live S3 dashboard now displays Phase 3 content validation status correctly. Passed state is verified. Failed and Not configured dashboard states are still optional to verify.
 - Next step: Optionally verify dashboard Failed state using content validation failure, optionally verify Not configured state by removing/emptying content validation environment variables, update TASKS.md Phase 3 checklist after validation is complete, and prepare Phase 3 completion summary.
 
+### Phase 3 dashboard failed state verification and healthy restore
+
+- Task name: Phase 3 dashboard failed state verification and healthy restore
+- What was done: Tested dashboard Failed state by setting `TARGET_URL=https://example.com`, `EXPECTED_TEXT=ThisTextShouldNotExist123`, and `FORBIDDEN_TEXT` empty; ran Lambda; confirmed live dashboard showed Status: DOWN, Content Check: Failed, Failure reason: `Expected text not found: 'ThisTextShouldNotExist123'`, and Recent Failures updated.
+- Problem faced: Needed to verify that Phase 3 content validation failure is visible on the live dashboard, not only in Lambda output and status.json.
+- How it was solved:
+  1. Set `EXPECTED_TEXT` to a value missing from the page.
+  2. Ran Lambda to generate a content validation failure.
+  3. Refreshed the live S3 dashboard.
+  4. Confirmed the dashboard displayed DOWN and Content Check: Failed.
+  5. Confirmed the failure reason appeared correctly.
+  6. Restored healthy settings afterward.
+- Final result: Dashboard Passed and Failed states are both verified. Not configured state is optional. Phase 3 is almost complete.
+- Next step: Restore and confirm healthy dashboard state if not already done, optionally test Not configured state, update TASKS.md Phase 3 checklist, and prepare Phase 3 completion summary.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Optionally verify dashboard Failed state using content validation failure.
-- Optionally verify Not configured state by removing/emptying content validation environment variables.
-- Update TASKS.md Phase 3 checklist after validation is complete.
+- Restore and confirm healthy dashboard state if not already done.
+- Optionally test Not configured state.
+- Update TASKS.md Phase 3 checklist.
 - Prepare Phase 3 completion summary.
