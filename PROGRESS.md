@@ -297,13 +297,28 @@
 - Final result: Phase 3 Lambda content validation is working for expected text pass, expected text missing failure, and forbidden text found failure. Dashboard UI still needs to be updated to display `content_check_passed`.
 - Next step: Update dashboard UI to display Content Check status, verify dashboard shows Passed, Failed, and Not configured states if possible, update TASKS.md after dashboard validation is complete, then prepare Phase 3 completion summary.
 
+### Phase 3 dashboard content check UI implementation
+
+- Task name: Phase 3 dashboard content check UI implementation
+- What was done: Updated `dashboard/index.html`; updated `dashboard/app.js`; added a Content Check display field to the dashboard; dashboard now reads `content_check_passed` from `status.json`; displays Passed when `content_check_passed === true`, Failed when `content_check_passed === false`, and Not configured when `content_check_passed` is null, undefined, or missing.
+- Problem faced: The dashboard did not have an existing markup target for displaying Phase 3 content validation results.
+- How it was solved:
+  1. Checked `dashboard/app.js` first.
+  2. Confirmed existing targets existed for status, last checked, HTTP status, response time, failure reason, and recent failures.
+  3. Added a minimal Content Check target in `dashboard/index.html`.
+  4. Updated `dashboard/app.js` to map `content_check_passed` to Passed, Failed, or Not configured.
+  5. Kept existing dashboard behavior unchanged.
+- Final result: Dashboard code can now display Phase 3 content validation status. S3 upload and live dashboard verification are still pending.
+- Next step: Upload updated `dashboard/index.html` and `dashboard/app.js` to S3, confirm dashboard shows Content Check: Passed with current healthy `status.json`, test Failed state using content validation failure, optionally test Not configured state, and update TASKS.md after dashboard validation is complete.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Update dashboard UI to display Content Check status.
-- Verify dashboard shows Passed, Failed, and Not configured states if possible.
+- Upload updated `dashboard/index.html` and `dashboard/app.js` to S3.
+- Confirm dashboard shows Content Check: Passed with current healthy `status.json`.
+- Test Failed state using content validation failure.
+- Optionally test Not configured state.
 - Update TASKS.md after dashboard validation is complete.
-- Then prepare Phase 3 completion summary.

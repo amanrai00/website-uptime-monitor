@@ -7,6 +7,7 @@ const elements = {
   lastChecked: document.getElementById("lastChecked"),
   statusCode: document.getElementById("statusCode"),
   responseTime: document.getElementById("responseTime"),
+  contentCheck: document.getElementById("contentCheck"),
   failurePanel: document.getElementById("failurePanel"),
   failureReason: document.getElementById("failureReason"),
   recentFailures: document.getElementById("recentFailures"),
@@ -50,6 +51,7 @@ function renderStatus(data) {
   elements.lastChecked.textContent = formatDateTime(data.last_checked || data.check_time);
   elements.statusCode.textContent = formatStatusCode(data.status_code);
   renderResponseTime(data.response_time_ms);
+  renderContentCheck(data.content_check_passed);
   renderFailureReason(isUp, data.failure_reason);
   renderRecentFailures(data.recent_failures);
 }
@@ -83,6 +85,16 @@ function renderResponseTime(responseTimeMs) {
     elements.responseTime.classList.add("response-medium");
   } else {
     elements.responseTime.classList.add("response-slow");
+  }
+}
+
+function renderContentCheck(contentCheckPassed) {
+  if (contentCheckPassed === true) {
+    elements.contentCheck.textContent = "Passed";
+  } else if (contentCheckPassed === false) {
+    elements.contentCheck.textContent = "Failed";
+  } else {
+    elements.contentCheck.textContent = "Not configured";
   }
 }
 
