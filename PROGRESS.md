@@ -267,14 +267,30 @@
 - Final result: Lambda code now supports Phase 3 content validation, but AWS deployment and validation are still pending.
 - Next step: Deploy updated Lambda, set `EXPECTED_TEXT` / `FORBIDDEN_TEXT` test values, run content validation tests, confirm DynamoDB and `status.json` include `content_check_passed`, then update dashboard UI to display content check result.
 
+### Phase 3 Lambda content validation AWS test
+
+- Task name: Phase 3 Lambda content validation AWS test
+- What was done: Deployed the updated Lambda code to AWS; added `EXPECTED_TEXT=Example Domain`; ran Lambda against `https://example.com`; confirmed the check passed with `is_success=true`, `failure_reason=null`, and `content_check_passed=true`; changed `EXPECTED_TEXT` to `ThisTextShouldNotExist123`; ran Lambda again; confirmed the content validation failure worked with `status_code=200`, `is_success=false`, `failure_reason=Expected text not found: 'ThisTextShouldNotExist123'`, and `content_check_passed=false`.
+- Problem faced: Needed to confirm content validation detects broken/missing content even when the website returns HTTP 200.
+- How it was solved:
+  1. Restored `TARGET_URL` to `https://example.com`.
+  2. Set `EXPECTED_TEXT` to text that exists on the page.
+  3. Ran Lambda and confirmed content validation passed.
+  4. Changed `EXPECTED_TEXT` to text that does not exist on the page.
+  5. Ran Lambda and confirmed the check failed because expected content was missing.
+  6. Confirmed the failure reason and `content_check_passed=false` in the Lambda output.
+- Final result: Phase 3 Lambda content validation works for expected-text pass and expected-text failure cases. `status.json` verification, healthy restore, forbidden-text test, and dashboard UI update are still pending.
+- Next step: Confirm `status.json` includes `content_check_passed`, restore `EXPECTED_TEXT=Example Domain`, run Lambda again and confirm healthy state, test `FORBIDDEN_TEXT`, update dashboard UI to display content check result, and update TASKS.md after validation is fully complete.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Deploy updated Lambda.
-- Set `EXPECTED_TEXT` / `FORBIDDEN_TEXT` test values.
-- Run content validation tests.
-- Confirm DynamoDB and `status.json` include `content_check_passed`.
-- Then update dashboard UI to display content check result.
+- Confirm `status.json` includes `content_check_passed`.
+- Restore `EXPECTED_TEXT=Example Domain`.
+- Run Lambda again and confirm healthy state.
+- Test `FORBIDDEN_TEXT`.
+- Update dashboard UI to display content check result.
+- Update TASKS.md after validation is fully complete.
