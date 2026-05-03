@@ -101,7 +101,9 @@ def without_null_values(item: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in item.items() if value is not None}
 
 
-def build_status_payload(result: dict[str, Any]) -> dict[str, Any]:
+def build_status_payload(
+    result: dict[str, Any], recent_failures: list[dict[str, Any]]
+) -> dict[str, Any]:
     return {
         "site_id": result["site_id"],
         "url": result["url"],
@@ -111,7 +113,7 @@ def build_status_payload(result: dict[str, Any]) -> dict[str, Any]:
         "response_time_ms": result["response_time_ms"],
         "is_success": result["is_success"],
         "failure_reason": result["failure_reason"],
-        "recent_failures": [],
+        "recent_failures": recent_failures,
     }
 
 
@@ -120,6 +122,78 @@ def write_result_to_dynamodb(table_name: str, result: dict[str, Any]) -> None:
 
     table = boto3.resource("dynamodb").Table(table_name)
     table.put_item(Item=without_null_values(result))
+
+
+def _as_int(value: Any) -> int | None:
+    return int(value) if value is not None else None
+
+
+def build_failure_item(item: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "check_time": item.get("check_time"),
+        "status_code": _as_int(item.get("status_code")),
+        "response_time_ms": _as_int(item.get("response_time_ms")),
+        "failure_reason": item.get("failure_reason"),
+    }
+
+
+def get_recent_failures(
+    table_name: str,
+    site_id: str,
+    current_result: dict[str, Any],
+    query_limit: int = 50,
+    failure_limit: int = 5,
+) -> list[dict[str, Any]]:
+    import boto3
+    from boto3.dynamodb.conditions import Key
+
+    print(f"recent failures query started for site_id={site_id}")
+    table = boto3.resource("dynamodb").Table(table_name)
+    try:
+        response = table.query(
+            KeyConditionExpression=Key("site_id").eq(site_id),
+            ScanIndexForward=False,
+            Limit=query_limit,
+        )
+    except Exception as exc:
+        print(f"recent failures query error: {type(exc).__name__}: {exc}")
+        raise
+
+    items = response.get("Items", [])
+    print(f"recent failures DynamoDB records returned: {len(items)}")
+
+    failures = [build_failure_item(item) for item in items if item.get("is_success") is False]
+    print(f"recent failures failed records found from query: {len(failures)}")
+
+    current_added = False
+    if current_result["is_success"] is False:
+        current_failure = build_failure_item(current_result)
+        if not any(
+            failure.get("check_time") == current_failure["check_time"]
+            for failure in failures
+        ):
+            failures.append(current_failure)
+            current_added = True
+
+    print(f"recent failures current failed check added manually: {current_added}")
+
+    recent_failures = []
+    seen_check_times = set()
+    for failure in sorted(
+        failures, key=lambda item: item.get("check_time") or "", reverse=True
+    ):
+        check_time = failure.get("check_time")
+        if check_time in seen_check_times:
+            continue
+
+        seen_check_times.add(check_time)
+        recent_failures.append(failure)
+
+        if len(recent_failures) == failure_limit:
+            break
+
+    print(f"recent failures final count written to status.json: {len(recent_failures)}")
+    return recent_failures
 
 
 def write_status_to_s3(bucket: str, key: str, payload: dict[str, Any]) -> None:
@@ -170,7 +244,10 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 
     write_result_to_dynamodb(config["dynamodb_table"], result)
 
-    status_payload = build_status_payload(result)
+    recent_failures = get_recent_failures(
+        config["dynamodb_table"], config["site_id"], result
+    )
+    status_payload = build_status_payload(result, recent_failures)
     if config["s3_bucket"]:
         write_status_to_s3(config["s3_bucket"], config["s3_status_key"], status_payload)
     else:

@@ -191,6 +191,40 @@
   7. Refreshed the dashboard and confirmed UP state.
 - Final result: Dashboard correctly reflects both UP and DOWN states.
 
+### Phase 2 Recent Failures dashboard fix
+
+- Task name: Phase 2 Recent Failures dashboard fix
+- What was done: Updated Lambda status payload generation so the S3 dashboard receives recent failed checks from DynamoDB.
+- Problem faced: The dashboard showed DOWN, but Recent Failures stayed empty and displayed "No recent failures available."
+- How it was solved:
+  1. Identified that status.json was writing `recent_failures` as an empty list or not collecting failed checks from DynamoDB.
+  2. Kept the existing health check, DynamoDB PutItem, SNS alert, and S3 status.json write flow.
+  3. Added a DynamoDB Query on `website_checks` for the current `SITE_ID` using `ScanIndexForward=False`.
+  4. Limited the query to the latest 50 records.
+  5. Filtered those records in Python for checks where `is_success` is false.
+  6. Kept the latest 5 failed checks.
+  7. Wrote each failure into `recent_failures` with `check_time`, `status_code`, `response_time_ms`, and `failure_reason`.
+  8. Noted that the Lambda role needs `dynamodb:Query` on `website_checks` if that permission is not already added.
+- Final result: Lambda now writes recent failed checks into `recent_failures` in status.json so the dashboard can show Recent Failures during DOWN states.
+- Next step: Add IAM permission if not already added, deploy/update Lambda, run a failure test, confirm status.json contains `recent_failures`, refresh dashboard, take updated DOWN screenshot, then restore `TARGET_URL` to the healthy URL.
+
+### Recent Failures empty list final fix
+
+- Task name: Recent Failures empty list final fix
+- What was done: Updated Lambda recent failure collection so the current failed check is included directly in status.json when the latest run fails.
+- Problem faced: status.json updated DOWN correctly with `status_code=404` and `failure_reason=HTTP 404: Not Found`, but `recent_failures` stayed empty.
+- How it was solved:
+  1. Cause found after debugging: the dashboard status payload depended only on failed records returned from the DynamoDB query, so status.json could still write `recent_failures` as an empty list even when the current check was DOWN.
+  2. Kept the current health check logic, DynamoDB PutItem logic, SNS alert logic, S3 status.json write behavior, and environment variable names.
+  3. Updated recent failure collection to query DynamoDB for latest records by the same `SITE_ID`.
+  4. Filtered queried records where `is_success` is false.
+  5. Added the current failed check directly when `is_success` is false and the same `check_time` was not already present.
+  6. Removed duplicates by `check_time`.
+  7. Sorted failures newest first and kept the latest 5.
+  8. Added CloudWatch print logs for query start, DynamoDB records returned, failed records found, whether the current failure was added manually, final recent failure count, and query errors.
+- Final result: Current failed checks are now written into `recent_failures` immediately, DynamoDB query fills older failures, duplicates are removed, and the latest 5 failures are written to status.json.
+- Next step: Deploy Lambda, run failure test, confirm `recent_failures` has at least 1 item, refresh dashboard, take updated DOWN screenshot, restore `TARGET_URL` to healthy URL.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
