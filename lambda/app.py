@@ -30,6 +30,8 @@ def get_config() -> dict[str, Any]:
         "site_id": os.environ.get("SITE_ID", "default-site"),
         "s3_bucket": os.environ.get("S3_BUCKET"),
         "s3_status_key": os.environ.get("S3_STATUS_KEY", "status.json"),
+        "expected_text": os.environ.get("EXPECTED_TEXT"),
+        "forbidden_text": os.environ.get("FORBIDDEN_TEXT"),
     }
 
 
@@ -37,13 +39,14 @@ def run_http_check(url: str, timeout_seconds: int) -> dict[str, Any]:
     start = time.time()
     status_code = None
     failure_reason = None
+    response_body = ""
 
     try:
         request = urllib.request.Request(url, method="GET")
         # urllib follows redirects by default; evaluate final resolved status code.
         with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
             status_code = response.getcode()
-            response.read().decode("utf-8", errors="replace")
+            response_body = response.read().decode("utf-8", errors="replace")
     except urllib.error.HTTPError as exc:
         status_code = exc.code
         failure_reason = f"HTTP {exc.code}: {exc.reason}"
@@ -60,6 +63,7 @@ def run_http_check(url: str, timeout_seconds: int) -> dict[str, Any]:
         "status_code": status_code,
         "response_time_ms": response_time_ms,
         "failure_reason": failure_reason,
+        "response_body": response_body,
     }
 
 
@@ -72,8 +76,12 @@ def build_result(
     response_time_ms: int,
     response_threshold_ms: int,
     failure_reason: str | None,
+    response_body: str,
+    expected_text: str | None,
+    forbidden_text: str | None,
 ) -> dict[str, Any]:
     is_success = failure_reason is None
+    content_check_passed = True
 
     if is_success and (status_code is None or not 200 <= status_code <= 299):
         is_success = False
@@ -86,6 +94,16 @@ def build_result(
             f"{response_threshold_ms}ms threshold"
         )
 
+    if is_success and expected_text and expected_text not in response_body:
+        is_success = False
+        content_check_passed = False
+        failure_reason = f"Expected text not found: '{expected_text}'"
+
+    if is_success and forbidden_text and forbidden_text in response_body:
+        is_success = False
+        content_check_passed = False
+        failure_reason = f"Forbidden text found: '{forbidden_text}'"
+
     return {
         "site_id": site_id,
         "check_time": check_time,
@@ -94,6 +112,7 @@ def build_result(
         "response_time_ms": response_time_ms,
         "is_success": is_success,
         "failure_reason": failure_reason,
+        "content_check_passed": content_check_passed,
     }
 
 
@@ -113,6 +132,7 @@ def build_status_payload(
         "response_time_ms": result["response_time_ms"],
         "is_success": result["is_success"],
         "failure_reason": result["failure_reason"],
+        "content_check_passed": result["content_check_passed"],
         "recent_failures": recent_failures,
     }
 
@@ -240,6 +260,9 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         response_time_ms=check["response_time_ms"],
         response_threshold_ms=config["response_threshold_ms"],
         failure_reason=check["failure_reason"],
+        response_body=check["response_body"],
+        expected_text=config["expected_text"],
+        forbidden_text=config["forbidden_text"],
     )
 
     write_result_to_dynamodb(config["dynamodb_table"], result)

@@ -252,12 +252,29 @@
 - Final result: Recent Failures is now fully working. The dashboard correctly shows UP, DOWN, failure reason, and recent failure history. Both Post 6 screenshots are ready.
 - Next step: Prepare LinkedIn Post 5 cost breakdown first, then use the UP and DOWN screenshots for Post 6 dashboard live.
 
+### Phase 3 Lambda content validation implementation
+
+- Task name: Phase 3 Lambda content validation implementation
+- What was done: Updated `lambda/app.py`; added optional `EXPECTED_TEXT` and `FORBIDDEN_TEXT`; safely decodes HTTP response body; fails when expected text is missing; fails when forbidden text is found; adds `content_check_passed` to DynamoDB result and `status.json`.
+- Problem faced: Phase 3 needed smarter monitoring beyond HTTP status and response time.
+- How it was solved:
+  1. Read optional content validation environment variables.
+  2. Decoded response body safely.
+  3. Applied expected-text and forbidden-text rules.
+  4. Reused existing `failure_reason` flow.
+  5. Added `content_check_passed` to stored result and dashboard payload.
+  6. Kept existing DynamoDB, SNS, S3, and recent failures logic unchanged.
+- Final result: Lambda code now supports Phase 3 content validation, but AWS deployment and validation are still pending.
+- Next step: Deploy updated Lambda, set `EXPECTED_TEXT` / `FORBIDDEN_TEXT` test values, run content validation tests, confirm DynamoDB and `status.json` include `content_check_passed`, then update dashboard UI to display content check result.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Prepare Post 5 cost breakdown.
-- Then prepare Post 6 dashboard live using the completed UP and DOWN screenshots.
-- Continue to Phase 3 content validation if needed.
+- Deploy updated Lambda.
+- Set `EXPECTED_TEXT` / `FORBIDDEN_TEXT` test values.
+- Run content validation tests.
+- Confirm DynamoDB and `status.json` include `content_check_passed`.
+- Then update dashboard UI to display content check result.
