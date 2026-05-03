@@ -340,13 +340,27 @@
 - Final result: Dashboard Passed and Failed states are both verified. Not configured state is optional. Phase 3 is almost complete.
 - Next step: Restore and confirm healthy dashboard state if not already done, optionally test Not configured state, update TASKS.md Phase 3 checklist, and prepare Phase 3 completion summary.
 
+### Phase 3 TASKS checklist update
+
+- Task name: Phase 3 TASKS checklist update
+- What was done: Updated `TASKS.md`; marked implemented and verified Phase 3 content validation checklist items complete; left Phase 4, Phase 5, Open Design Decisions, README.md, and existing progress history unchanged; did not mark optional Not configured dashboard state.
+- Problem faced: Needed to align TASKS.md with the actual Phase 3 work already implemented and verified.
+- How it was solved:
+  1. Reviewed completed Phase 3 Lambda content validation work.
+  2. Reviewed completed AWS validation results.
+  3. Reviewed completed dashboard Passed and Failed state verification.
+  4. Marked only verified Phase 3 checklist items as complete.
+  5. Left optional/unverified items unchanged.
+- Final result: TASKS.md now reflects the current Phase 3 implementation and validation status. Phase 3 is ready for final completion review.
+- Next step: Review TASKS.md Phase 3 checklist, commit TASKS.md and PROGRESS.md, prepare Phase 3 completion summary, then decide whether to move to Phase 4 or portfolio polish.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Restore and confirm healthy dashboard state if not already done.
-- Optionally test Not configured state.
-- Update TASKS.md Phase 3 checklist.
+- Review TASKS.md Phase 3 checklist.
+- Commit TASKS.md and PROGRESS.md.
 - Prepare Phase 3 completion summary.
+- Then decide whether to move to Phase 4 or portfolio polish.

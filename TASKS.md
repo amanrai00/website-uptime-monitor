@@ -212,22 +212,22 @@ Run each test in order. Do not proceed to Phase 2 until all pass.
 
 > PRD reference: Section 9.6, 14 (Version 3 Addition)
 
-- [ ] Add environment variables to Lambda:
-  - [ ] `EXPECTED_TEXT` — text that must be present in the response body (optional; skip check if empty)
-  - [ ] `FORBIDDEN_TEXT` — text that must not be present in the response body (optional; skip check if empty)
-- [ ] Update `app.py` to read response body and apply content rules after status and response time checks pass
-- [ ] Fail check if `EXPECTED_TEXT` is set and not found in body; set failure reason: `Expected text not found: '<text>'`
-- [ ] Fail check if `FORBIDDEN_TEXT` is set and found in body; set failure reason: `Forbidden text found: '<text>'`
-- [ ] Add `content_check_passed` field to DynamoDB result and `status.json`
-- [ ] Include content failure reason in SNS alert message
-- [ ] Update dashboard to show content check result (pass / fail / not configured)
+- [x] Add environment variables to Lambda:
+  - [x] `EXPECTED_TEXT` — text that must be present in the response body (optional; skip check if empty)
+  - [x] `FORBIDDEN_TEXT` — text that must not be present in the response body (optional; skip check if empty)
+- [x] Update `app.py` to read response body and apply content rules after status and response time checks pass
+- [x] Fail check if `EXPECTED_TEXT` is set and not found in body; set failure reason: `Expected text not found: '<text>'`
+- [x] Fail check if `FORBIDDEN_TEXT` is set and found in body; set failure reason: `Forbidden text found: '<text>'`
+- [x] Add `content_check_passed` field to DynamoDB result and `status.json`
+- [x] Include content failure reason in SNS alert message
+- [x] Update dashboard to show content check result (pass / fail / not configured)
 
 ### Phase 3 Validation
 
-- [ ] Set `EXPECTED_TEXT` to a string present on the page and confirm check passes
-- [ ] Set `EXPECTED_TEXT` to a string not on the page and confirm check fails with correct reason
-- [ ] Set `FORBIDDEN_TEXT` to a string on the page and confirm check fails with correct reason
-- [ ] Confirm `content_check_passed` field appears in DynamoDB
+- [x] Set `EXPECTED_TEXT` to a string present on the page and confirm check passes
+- [x] Set `EXPECTED_TEXT` to a string not on the page and confirm check fails with correct reason
+- [x] Set `FORBIDDEN_TEXT` to a string on the page and confirm check fails with correct reason
+- [x] Confirm `content_check_passed` field appears in DynamoDB
 - [ ] Confirm SNS alert includes content failure reason
 
 -----
