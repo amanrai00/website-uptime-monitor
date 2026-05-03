@@ -282,15 +282,28 @@
 - Final result: Phase 3 Lambda content validation works for expected-text pass and expected-text failure cases. `status.json` verification, healthy restore, forbidden-text test, and dashboard UI update are still pending.
 - Next step: Confirm `status.json` includes `content_check_passed`, restore `EXPECTED_TEXT=Example Domain`, run Lambda again and confirm healthy state, test `FORBIDDEN_TEXT`, update dashboard UI to display content check result, and update TASKS.md after validation is fully complete.
 
+### Phase 3 forbidden-text validation test and healthy restore
+
+- Task name: Phase 3 forbidden-text validation test and healthy restore
+- What was done: Restored healthy content validation with `TARGET_URL=https://example.com` and `EXPECTED_TEXT=Example Domain`; confirmed Lambda returned `is_success=true`, `failure_reason=null`, and `content_check_passed=true`; tested forbidden-text validation by setting `FORBIDDEN_TEXT=Example Domain`; confirmed Lambda failed correctly with `status_code=200`, `is_success=false`, `failure_reason=Forbidden text found: 'Example Domain'`, and `content_check_passed=false`.
+- Problem faced: Needed to confirm the monitor can detect forbidden/bad page content even when the website still returns HTTP 200.
+- How it was solved:
+  1. Kept `TARGET_URL` as `https://example.com`.
+  2. Kept `EXPECTED_TEXT` as `Example Domain`.
+  3. Added `FORBIDDEN_TEXT` with text that exists on the page.
+  4. Ran Lambda and confirmed the check failed because forbidden content was found.
+  5. Restored `FORBIDDEN_TEXT` to empty after the test.
+  6. Ran Lambda again to confirm the monitor returned to healthy state.
+- Final result: Phase 3 Lambda content validation is working for expected text pass, expected text missing failure, and forbidden text found failure. Dashboard UI still needs to be updated to display `content_check_passed`.
+- Next step: Update dashboard UI to display Content Check status, verify dashboard shows Passed, Failed, and Not configured states if possible, update TASKS.md after dashboard validation is complete, then prepare Phase 3 completion summary.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Confirm `status.json` includes `content_check_passed`.
-- Restore `EXPECTED_TEXT=Example Domain`.
-- Run Lambda again and confirm healthy state.
-- Test `FORBIDDEN_TEXT`.
-- Update dashboard UI to display content check result.
-- Update TASKS.md after validation is fully complete.
+- Update dashboard UI to display Content Check status.
+- Verify dashboard shows Passed, Failed, and Not configured states if possible.
+- Update TASKS.md after dashboard validation is complete.
+- Then prepare Phase 3 completion summary.
