@@ -202,9 +202,9 @@ Run each test in order. Do not proceed to Phase 2 until all pass.
   - [x] Confirm dashboard shows DOWN status with failure reason
   - [x] Restore Lambda `TARGET_URL` to working URL after DOWN test
   - [x] Confirm dashboard returns to UP after restore
-- [ ] Confirm `recent_failures` list populates after failures occur
-- [ ] Confirm last-checked time updates after each Lambda execution
-- [ ] Confirm auto-refresh works after 60 seconds without manual reload
+- [x] Confirm `recent_failures` list populates after failures occur
+- [x] Confirm last-checked time updates after each Lambda execution
+- [x] Confirm auto-refresh works after 60 seconds without manual reload
 
 -----
 
