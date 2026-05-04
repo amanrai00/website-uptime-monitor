@@ -262,8 +262,8 @@ Then build:
 
 > PRD reference: Section 18 (Phase 5), Section 10 (Non-Functional Requirements)
 
-- [ ] Create `docs/architecture.png` — clean architecture diagram matching PRD Section 11
-- [ ] Add architecture section to README with diagram image
+- [x] Create `docs/architecture.png` — clean architecture diagram matching PRD Section 11
+- [x] Add architecture section to README with diagram image
 - [x] Add real screenshots to `docs/screenshots/`:
   - [x] Dashboard in UP state
   - [x] Dashboard in DOWN state with failure reason visible

@@ -36,6 +36,12 @@ website-uptime-monitor/
 4. Add content validation.
 5. Polish documentation, screenshots, and architecture assets for portfolio presentation.
 
+## Architecture
+
+![Architecture](docs/architecture.png)
+
+EventBridge runs every 5 minutes. Lambda checks the target website and validates HTTP status, response time, expected text, and forbidden text. Results are stored in DynamoDB, and the latest status is written to S3 `status.json`. The static S3 dashboard reads `status.json`. SNS sends an email alert only when the check fails.
+
 ## Phase 1 AWS Setup
 
 Use AWS region `ap-northeast-1` for all Phase 1 resources.

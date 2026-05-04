@@ -380,11 +380,24 @@
 - Final result: Phase 5 screenshot tracking now reflects the collected documentation screenshots.
 - Next step: Create `docs/architecture.png` and add the architecture section to README.
 
+### Phase 5 architecture documentation
+
+- Task name: Phase 5 architecture documentation
+- What was done: Created `docs/architecture.png`; added README architecture section with diagram; updated `TASKS.md` architecture checklist.
+- Problem faced: Phase 5 architecture documentation needed to show the system flow clearly without marking unrelated README polish tasks complete.
+- How it was solved:
+  1. Confirmed `docs/architecture.png` exists.
+  2. Added an Architecture section to `README.md`.
+  3. Included the architecture diagram image.
+  4. Documented the EventBridge, Lambda, DynamoDB, S3 dashboard, and SNS alert flow.
+  5. Marked only the two Phase 5 architecture checklist items complete in `TASKS.md`.
+- Final result: README now includes the architecture diagram and a short explanation of the monitoring flow.
+- Next step: Add cost breakdown section to README.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Create `docs/architecture.png`.
-- Add the architecture section to README.
+- Add cost breakdown section to README.
