@@ -264,12 +264,12 @@ Then build:
 
 - [ ] Create `docs/architecture.png` — clean architecture diagram matching PRD Section 11
 - [ ] Add architecture section to README with diagram image
-- [ ] Add real screenshots to `docs/screenshots/`:
-  - [ ] Dashboard in UP state
-  - [ ] Dashboard in DOWN state with failure reason visible
-  - [ ] DynamoDB table showing stored check results
-  - [ ] SNS alert email received in inbox
-  - [ ] CloudWatch logs showing structured Lambda output
+- [x] Add real screenshots to `docs/screenshots/`:
+  - [x] Dashboard in UP state
+  - [x] Dashboard in DOWN state with failure reason visible
+  - [x] DynamoDB table showing stored check results
+  - [x] SNS alert email received in inbox
+  - [x] CloudWatch logs showing structured Lambda output
 - [ ] Write clear setup instructions in README (step-by-step, someone unfamiliar with the project can follow)
 - [ ] Add cost breakdown section to README (PRD Section 10 — must stay within Free Tier)
 - [ ] Add known limitations section to README

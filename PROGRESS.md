@@ -367,12 +367,24 @@
 - Final result: Phase 3 validation is now fully complete.
 - Next step: Commit TASKS.md and PROGRESS.md, prepare Phase 3 completion summary, then decide Phase 4 or portfolio polish.
 
+### Phase 5 screenshot collection
+
+- Task name: Phase 5 screenshot collection
+- What was done: Added real screenshots for portfolio documentation: `docs/screenshots/dashboard-up.png`, `docs/screenshots/dashboard-down.png`, `docs/screenshots/dynamodb-results.png`, `docs/screenshots/sns-alert-email.png`, and `docs/screenshots/cloudwatch-logs.png`; updated `TASKS.md` to mark only the Phase 5 screenshot checklist items complete.
+- Problem faced: Phase 5 portfolio polish needed proof screenshots tracked without marking unrelated documentation, architecture, setup, cost, limitations, lessons learned, future improvements, or demo recording work as complete.
+- How it was solved:
+  1. Confirmed the Phase 5 screenshot checklist items that correspond to the added files.
+  2. Marked `Add real screenshots to docs/screenshots/` complete.
+  3. Marked the dashboard UP, dashboard DOWN, DynamoDB results, SNS alert email, and CloudWatch logs screenshot items complete.
+  4. Left the remaining Phase 5 checklist items unchanged.
+- Final result: Phase 5 screenshot tracking now reflects the collected documentation screenshots.
+- Next step: Create `docs/architecture.png` and add the architecture section to README.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Commit TASKS.md and PROGRESS.md.
-- Prepare Phase 3 completion summary.
-- Then decide Phase 4 or portfolio polish.
+- Create `docs/architecture.png`.
+- Add the architecture section to README.
