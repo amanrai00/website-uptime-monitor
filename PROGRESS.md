@@ -436,10 +436,23 @@
 - Final result: README now includes the main design, operations, monitoring, and debugging lessons from the project.
 - Next step: Add future improvements section to README.
 
+### Phase 5 future improvements documentation
+
+- Task name: Phase 5 future improvements documentation
+- What was done: Added README Future Improvements section; referenced Phase 4 improvement ideas; documented multi-site monitoring, uptime metrics, trend chart, alert threshold, and TTL as future work; updated `TASKS.md` future improvements checklist.
+- Problem faced: Phase 5 documentation needed to show a clear roadmap from the current MVP to Phase 4 improvements without marking unrelated portfolio checklist items complete.
+- How it was solved:
+  1. Added a Future Improvements section to `README.md`.
+  2. Listed multi-site monitoring with separate `site_id` values.
+  3. Added uptime, response time, incident count, alert threshold, redirect handling, trend chart, dashboard UI, TTL, and CloudWatch alarm improvements.
+  4. Marked only the future improvements checklist item complete in `TASKS.md`.
+- Final result: README now documents the main future work items that build on the current monitor and align with Phase 4.
+- Next step: Review README setup instructions and decide whether they need improvement.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Add future improvements section to README.
+- Review README setup instructions and decide whether they need improvement.

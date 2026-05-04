@@ -274,7 +274,7 @@ Then build:
 - [x] Add cost breakdown section to README (PRD Section 10 — must stay within Free Tier)
 - [x] Add known limitations section to README
 - [x] Add lessons learned section
-- [ ] Add future improvements section referencing Phase 4 items
+- [x] Add future improvements section referencing Phase 4 items
 - [ ] Record a short demo GIF or screen recording of the full flow
 
 -----

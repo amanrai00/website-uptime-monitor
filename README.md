@@ -98,6 +98,19 @@ Cost notes:
 - Dashboard freshness should be visible with `last_checked` time so viewers know when the latest check ran.
 - Debugging `recent_failures` and `status.json` updates showed the importance of keeping stored history and the published dashboard state in sync.
 
+## Future Improvements
+
+- Monitor multiple websites using separate `site_id` values.
+- Add uptime percentage per site.
+- Add average response time metric.
+- Add incident count for the last 24 hours and last 7 days.
+- Add consecutive-failure alert threshold to reduce email noise.
+- Add configurable redirect handling.
+- Add response time trend chart on the dashboard.
+- Improve dashboard UI for multiple sites.
+- Add DynamoDB TTL to automatically expire old check records.
+- Add CloudWatch alarm if Lambda/EventBridge stops running.
+
 ## Phase 1 AWS Setup
 
 Use AWS region `ap-northeast-1` for all Phase 1 resources.
