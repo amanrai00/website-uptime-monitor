@@ -271,7 +271,7 @@ Then build:
   - [x] SNS alert email received in inbox
   - [x] CloudWatch logs showing structured Lambda output
 - [ ] Write clear setup instructions in README (step-by-step, someone unfamiliar with the project can follow)
-- [ ] Add cost breakdown section to README (PRD Section 10 — must stay within Free Tier)
+- [x] Add cost breakdown section to README (PRD Section 10 — must stay within Free Tier)
 - [ ] Add known limitations section to README
 - [ ] Add lessons learned section
 - [ ] Add future improvements section referencing Phase 4 items

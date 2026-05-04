@@ -42,6 +42,40 @@ website-uptime-monitor/
 
 EventBridge runs every 5 minutes. Lambda checks the target website and validates HTTP status, response time, expected text, and forbidden text. Results are stored in DynamoDB, and the latest status is written to S3 `status.json`. The static S3 dashboard reads `status.json`. SNS sends an email alert only when the check fails.
 
+## Cost Breakdown
+
+This project is designed to stay very low cost for a small personal monitoring workload.
+
+Estimated monthly usage:
+
+- EventBridge schedule: runs every 5 minutes
+- Lambda executions: about 8,640 checks per month
+- DynamoDB: one small item written per check, plus small reads for recent failures
+- S3: one small `status.json` file plus static dashboard files
+- SNS: email alerts only when failures happen
+
+Expected cost for this project:
+
+- Usually $0 or very close to $0 for personal/demo usage
+- Main reason: monthly usage is far below typical AWS Free Tier limits for Lambda and EventBridge Scheduler
+- DynamoDB and S3 data size are very small
+- SNS email alerts are only sent during failures
+
+Cost control choices:
+
+- Serverless design, no always-running EC2 instance
+- S3 static dashboard instead of a hosted frontend server
+- DynamoDB on-demand table for small and unpredictable usage
+- Lambda runs only on schedule, not continuously
+- `status.json` is tiny and overwritten each check
+- Recent failures are limited to the latest 5 items
+
+Cost notes:
+
+- Actual billing depends on AWS region, account Free Tier eligibility, request volume, stored data size, and alert volume.
+- For production use, AWS Budgets and billing alarms should be configured.
+- Pricing should always be checked against the official AWS pricing pages.
+
 ## Phase 1 AWS Setup
 
 Use AWS region `ap-northeast-1` for all Phase 1 resources.

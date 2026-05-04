@@ -394,10 +394,24 @@
 - Final result: README now includes the architecture diagram and a short explanation of the monitoring flow.
 - Next step: Add cost breakdown section to README.
 
+### Phase 5 cost breakdown documentation
+
+- Task name: Phase 5 cost breakdown documentation
+- What was done: Added README cost breakdown section; documented estimated monthly usage; documented serverless cost-control choices; updated `TASKS.md` cost breakdown checklist.
+- Problem faced: Phase 5 documentation needed to explain why the project stays very low cost without marking unrelated README polish items complete.
+- How it was solved:
+  1. Added a Cost Breakdown section to `README.md`.
+  2. Documented estimated monthly usage for EventBridge, Lambda, DynamoDB, S3, and SNS.
+  3. Documented expected personal/demo cost and cost-control choices.
+  4. Added cost notes about billing variability and production budget alarms.
+  5. Marked only the Phase 5 cost breakdown checklist item complete in `TASKS.md`.
+- Final result: README now explains expected cost, Free Tier alignment, and serverless choices that keep the monitor low cost.
+- Next step: Add known limitations section to README.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Add cost breakdown section to README.
+- Add known limitations section to README.
