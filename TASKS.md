@@ -228,7 +228,7 @@ Run each test in order. Do not proceed to Phase 2 until all pass.
 - [x] Set `EXPECTED_TEXT` to a string not on the page and confirm check fails with correct reason
 - [x] Set `FORBIDDEN_TEXT` to a string on the page and confirm check fails with correct reason
 - [x] Confirm `content_check_passed` field appears in DynamoDB
-- [ ] Confirm SNS alert includes content failure reason
+- [x] Confirm SNS alert includes content failure reason
 
 -----
 
