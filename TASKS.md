@@ -270,7 +270,7 @@ Then build:
   - [x] DynamoDB table showing stored check results
   - [x] SNS alert email received in inbox
   - [x] CloudWatch logs showing structured Lambda output
-- [ ] Write clear setup instructions in README (step-by-step, someone unfamiliar with the project can follow)
+- [x] Write clear setup instructions in README (step-by-step, someone unfamiliar with the project can follow)
 - [x] Add cost breakdown section to README (PRD Section 10 — must stay within Free Tier)
 - [x] Add known limitations section to README
 - [x] Add lessons learned section

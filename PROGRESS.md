@@ -449,10 +449,25 @@
 - Final result: README now documents the main future work items that build on the current monitor and align with Phase 4.
 - Next step: Review README setup instructions and decide whether they need improvement.
 
+### Phase 5 setup instructions documentation
+
+- Task name: Phase 5 setup instructions documentation
+- What was done: Improved README setup instructions; documented AWS resources; documented Lambda environment variables; documented validation checklist; updated `TASKS.md` setup instructions checklist.
+- Problem faced: README needed a clear manual setup flow that someone unfamiliar with the project could follow without changing project code or AWS settings.
+- How it was solved:
+  1. Added a Setup Instructions section to `README.md`.
+  2. Listed prerequisites and the AWS region.
+  3. Documented required AWS resources.
+  4. Documented Lambda environment variables.
+  5. Added deployment flow and validation checklist.
+  6. Marked only the setup instructions checklist item complete in `TASKS.md`.
+- Final result: README now has a clear setup overview covering prerequisites, AWS resources, environment variables, deployment flow, and validation checks.
+- Next step: Decide whether to create an optional demo GIF/screen recording or finish Phase 5 polish summary.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Review README setup instructions and decide whether they need improvement.
+- Decide whether to create an optional demo GIF/screen recording or finish Phase 5 polish summary.

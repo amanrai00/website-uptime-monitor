@@ -36,6 +36,56 @@ website-uptime-monitor/
 4. Add content validation.
 5. Polish documentation, screenshots, and architecture assets for portfolio presentation.
 
+## Setup Instructions
+
+### Prerequisites
+
+- AWS account
+- GitHub repository
+- Python 3.12 or compatible Python version
+- AWS region used: `ap-northeast-1`
+
+### AWS Resources To Create
+
+- DynamoDB table: `website_checks`
+- SNS topic: `uptime-alerts`
+- IAM role: `uptime-monitor-lambda-role`
+- Lambda function: `website-uptime-check`
+- EventBridge schedule: `uptime-check-every-5-min`
+- S3 bucket for static dashboard and `status.json`
+
+### Lambda Environment Variables
+
+- `TARGET_URL`
+- `TIMEOUT_SECONDS`
+- `RESPONSE_THRESHOLD_MS`
+- `SNS_TOPIC_ARN`
+- `DYNAMODB_TABLE`
+- `S3_BUCKET`
+- `S3_STATUS_KEY`
+- `SITE_ID`
+- `EXPECTED_TEXT`
+- `FORBIDDEN_TEXT`
+
+### Deployment Flow
+
+1. Package Lambda code.
+2. Upload/update Lambda code.
+3. Configure environment variables.
+4. Upload dashboard files to S3.
+5. Run a manual Lambda test.
+6. Confirm DynamoDB writes.
+7. Confirm `status.json` updates.
+8. Confirm dashboard loads.
+
+### Validation Checklist
+
+- Healthy URL returns UP.
+- Broken URL returns DOWN.
+- Missing `EXPECTED_TEXT` returns DOWN.
+- SNS alert email is received.
+- Dashboard shows latest status and recent failures.
+
 ## Architecture
 
 ![Architecture](docs/architecture.png)
