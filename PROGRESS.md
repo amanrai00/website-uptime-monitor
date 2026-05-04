@@ -408,10 +408,24 @@
 - Final result: README now explains expected cost, Free Tier alignment, and serverless choices that keep the monitor low cost.
 - Next step: Add known limitations section to README.
 
+### Phase 5 known limitations documentation
+
+- Task name: Phase 5 known limitations documentation
+- What was done: Added README Known Limitations section; documented current single-site scope; documented dashboard freshness limitation; documented alerting and analytics limitations; updated `TASKS.md` known limitations checklist.
+- Problem faced: Phase 5 documentation needed to clearly set expectations about current project boundaries without marking unrelated README polish tasks complete.
+- How it was solved:
+  1. Added a Known Limitations section to `README.md`.
+  2. Documented the current single-target monitoring scope.
+  3. Documented that the dashboard reflects the latest `status.json` instead of real-time updates.
+  4. Documented alerting dependencies, repeated failure emails, public dashboard tradeoff, and analytics limits.
+  5. Marked only the known limitations checklist item complete in `TASKS.md`.
+- Final result: README now describes the current limitations and future improvement areas for monitoring, alerting, dashboard freshness, security, and analytics.
+- Next step: Add lessons learned section to README.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Add known limitations section to README.
+- Add lessons learned section to README.

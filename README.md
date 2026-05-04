@@ -76,6 +76,16 @@ Cost notes:
 - For production use, AWS Budgets and billing alarms should be configured.
 - Pricing should always be checked against the official AWS pricing pages.
 
+## Known Limitations
+
+- The monitor currently checks one target website.
+- Alerts currently depend on Lambda execution. If Lambda/EventBridge stops running, a separate CloudWatch alarm would be needed.
+- The dashboard is not real-time. It reflects the latest `status.json` written by Lambda.
+- SNS alerts are sent on failure events, so repeated failures may create repeated emails.
+- No authentication is added to the public S3 dashboard because this is a portfolio/demo project.
+- Historical analytics are limited. Uptime percentage, trend charts, and incident counts are future improvements.
+- The dashboard uses a static `status.json` file instead of an API backend to keep the project simple and low cost.
+
 ## Phase 1 AWS Setup
 
 Use AWS region `ap-northeast-1` for all Phase 1 resources.
