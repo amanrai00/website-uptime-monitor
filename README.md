@@ -86,6 +86,18 @@ Cost notes:
 - Historical analytics are limited. Uptime percentage, trend charts, and incident counts are future improvements.
 - The dashboard uses a static `status.json` file instead of an API backend to keep the project simple and low cost.
 
+## Lessons Learned
+
+- Serverless Lambda is a good fit for scheduled uptime monitoring because it runs only when checks are needed and does not require maintaining an always-on server.
+- DynamoDB works well for append-only check history because each monitor run can write a small timestamped item with predictable access patterns.
+- S3 `status.json` is enough for a simple low-cost dashboard because the dashboard only needs the latest published monitor state.
+- EventBridge can replace a traditional cron job by running Lambda on a managed schedule.
+- IAM least-privilege matters for portfolio projects because it shows that the system grants only the permissions each service needs.
+- SNS provides simple failure notification without building or operating a custom email system.
+- HTTP 200 is not always enough for monitoring. Content validation adds stronger monitoring by checking expected and forbidden page text.
+- Dashboard freshness should be visible with `last_checked` time so viewers know when the latest check ran.
+- Debugging `recent_failures` and `status.json` updates showed the importance of keeping stored history and the published dashboard state in sync.
+
 ## Phase 1 AWS Setup
 
 Use AWS region `ap-northeast-1` for all Phase 1 resources.

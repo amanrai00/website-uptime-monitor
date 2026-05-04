@@ -422,10 +422,24 @@
 - Final result: README now describes the current limitations and future improvement areas for monitoring, alerting, dashboard freshness, security, and analytics.
 - Next step: Add lessons learned section to README.
 
+### Phase 5 lessons learned documentation
+
+- Task name: Phase 5 lessons learned documentation
+- What was done: Added README Lessons Learned section; documented AWS/serverless design lessons; documented content validation lesson; documented `recent_failures`/`status.json` debugging lesson; updated `TASKS.md` lessons learned checklist.
+- Problem faced: Phase 5 documentation needed to explain the engineering takeaways from the project without changing implementation code or marking unrelated checklist items complete.
+- How it was solved:
+  1. Added a Lessons Learned section to `README.md`.
+  2. Documented why Lambda, EventBridge, DynamoDB, S3 `status.json`, IAM least-privilege, and SNS fit this project.
+  3. Documented why HTTP 200 alone is not enough and why content validation improves monitoring.
+  4. Documented the dashboard freshness and `recent_failures`/`status.json` debugging lessons.
+  5. Marked only the lessons learned checklist item complete in `TASKS.md`.
+- Final result: README now includes the main design, operations, monitoring, and debugging lessons from the project.
+- Next step: Add future improvements section to README.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Add lessons learned section to README.
+- Add future improvements section to README.
