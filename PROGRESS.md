@@ -464,10 +464,23 @@
 - Final result: README now has a clear setup overview covering prerequisites, AWS resources, environment variables, deployment flow, and validation checks.
 - Next step: Decide whether to create an optional demo GIF/screen recording or finish Phase 5 polish summary.
 
+### Phase 5 portfolio polish summary
+
+- Task name: Phase 5 portfolio polish summary
+- What was done: Summarized Phase 5 polish completed so far: added portfolio screenshots; added architecture diagram; added README Architecture section; added README Cost Breakdown section; added README Known Limitations section; added README Lessons Learned section; added README Future Improvements section; added README Setup Instructions section.
+- Problem faced: Phase 5 needed a completion summary that reflects the documentation and screenshot polish already completed while leaving the optional demo GIF/screen recording for later.
+- How it was solved:
+  1. Reviewed the completed Phase 5 polish work already tracked in `PROGRESS.md`.
+  2. Summarized the screenshot, architecture, README documentation, setup, and portfolio polish work.
+  3. Kept the demo GIF/screen recording intentionally left for later because screenshots and README are enough for the first portfolio pass.
+  4. Left README.md, TASKS.md, PRD.md, Lambda code, dashboard code, screenshots, architecture image, and AWS settings unchanged.
+- Final result: Phase 5 portfolio polish is complete for the first portfolio pass, with the optional demo GIF/screen recording deferred.
+- Next step: Review final README, then merge phase-5-portfolio-polish into main and push.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Decide whether to create an optional demo GIF/screen recording or finish Phase 5 polish summary.
+- Review final README, then merge phase-5-portfolio-polish into main and push.
