@@ -206,7 +206,7 @@ No broad application permissions. DynamoDB, SNS, and S3 are each scoped to a spe
 
 **`status.json` and DynamoDB can silently diverge.** The dashboard showed DOWN, but `recent_failures` stayed empty because the Lambda was querying historical DynamoDB records but not injecting the current failed check into the S3 payload. Fix: write the current check result directly into `recent_failures` first, query DynamoDB for older failures, deduplicate by `check_time`, keep the latest 5.
 
-**Static S3 beats API Gateway for a read-only dashboard.** One file, no backend, no cold starts on the read path. The only tradeoff is eventual consistency. The dashboard is as fresh as the last Lambda run.
+**Static S3 beats API Gateway for a read-only dashboard.** One file, no backend, no cold starts on the read path. The only tradeoff is the 5-minute polling interval. The dashboard is as fresh as the last Lambda run.
 
 **IAM scope matters even in personal projects.** Scoping permissions to specific ARNs forced a clear understanding of what each service actually needs, and that thinking comes up directly in systems design interviews.
 
