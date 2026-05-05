@@ -4,7 +4,7 @@
 
 > サーバーレスAWS監視エンジン。稼働確認、コンテンツ検証、障害アラート、静的ダッシュボードへのステータス公開を実現します。サーバー不要。運用コストはほぼゼロ。
 
-![アーキテクチャ](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/architecture.ja.png)
+![アーキテクチャ](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/architecture.ja.png.PNG)
 
 -----
 
