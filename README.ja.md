@@ -4,7 +4,7 @@
 
 > サーバーレスAWS監視エンジン。稼働確認、コンテンツ検証、障害アラート、静的ダッシュボードへのステータス公開を実現します。サーバー不要。運用コストはほぼゼロ。
 
-![アーキテクチャ](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/architecture.png)
+![アーキテクチャ](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/architecture.ja.png)
 
 -----
 
@@ -42,10 +42,10 @@ EventBridge（5分ごと）
    Lambda 関数
    ┌──────────────────────────────┐
    │  HTTP GET → 対象URL           │
-   │  ✓ ステータスコードが2xx？        │
-   │  ✓ レスポンス時間が閾値以内？       │
-   │  ✓ 期待テキストが存在する？        │
-   │  ✓ 禁止テキストが存在しない？       │
+   │  ✓ ステータスコードが2xx？     │
+   │  ✓ レスポンス時間が閾値以内？  │
+   │  ✓ 期待テキストが存在する？    │
+   │  ✓ 禁止テキストが存在しない？  │
    └──────────────────────────────┘
         │                   │
         ▼                   ▼
