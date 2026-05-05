@@ -1,363 +1,255 @@
 # Website Uptime Monitor
 
-Website Uptime Monitor is a serverless AWS project for checking whether a website is reachable, responding within a threshold, and eventually showing expected content. It stores check results, sends alerts on failures, and publishes current status to a static dashboard.
+> Serverless AWS monitoring engine that checks uptime, validates content, alerts on failure, and publishes live status to a static dashboard. Zero servers. Near-zero cost.
 
-## AWS Region
+![Architecture](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/architecture.png)
 
-This project uses `ap-northeast-1`.
+-----
 
-## Folder Structure
+## What This Does
 
-```text
-website-uptime-monitor/
-|-- README.md
-|-- PRD.md
-|-- TASKS.md
-|-- .gitignore
-|-- lambda/
-|   |-- app.py
-|   |-- requirements.txt
-|   `-- tests/
-|       `-- test_app.py
-|-- dashboard/
-|   |-- index.html
-|   |-- style.css
-|   `-- app.js
-`-- docs/
-    |-- architecture.png
-    `-- screenshots/
+Every 5 minutes, a Lambda function wakes up, hits a target URL, and makes four decisions:
+
+1. Did it respond at all?
+1. Did it respond fast enough?
+1. Does the page contain the content it should?
+1. Does the page contain content it shouldn’t?
+
+Results go to DynamoDB. If something fails, an SNS email fires immediately. The latest status overwrites a single `status.json` file on S3, which a static dashboard reads on load. No API Gateway. No servers to maintain.
+
+-----
+
+## Dashboard
+
+|UP State                                                                                                        |DOWN State                                                                                                          |
+|----------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+|![UP](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/dashboard-up.png)|![DOWN](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/dashboard-down.png)|
+
+|DynamoDB Check History                                                                                                    |SNS Alert Email                                                                                                     |
+|--------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+|![DynamoDB](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/dynamodb-results.png)|![SNS](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/sns-alert-email.png)|
+
+-----
+
+## How It Works
+
+```
+EventBridge (every 5 min)
+        │
+        ▼
+   Lambda Function
+   ┌──────────────────────────────┐
+   │  HTTP GET → target URL       │
+   │  ✓ Status code 2xx?          │
+   │  ✓ Response time < threshold?│
+   │  ✓ Expected text present?    │
+   │  ✓ Forbidden text absent?    │
+   └──────────────────────────────┘
+        │                   │
+        ▼                   ▼
+   DynamoDB            S3 status.json ──→ Static Dashboard
+   (full history)
+        │
+        ▼  on failure only
+   SNS Email Alert
 ```
 
-## Build Order
+**Why this stack:**
 
-1. Build the monitoring engine with Lambda, DynamoDB, SNS, and EventBridge.
-2. Verify check results are stored and alerts fire on failures.
-3. Add the S3 dashboard and `status.json` update flow.
-4. Add content validation.
-5. Polish documentation, screenshots, and architecture assets for portfolio presentation.
+- **Lambda over EC2:** runs only on schedule, no idle compute, no patching
+- **DynamoDB over RDS:** append-only timestamped writes with no schema to maintain
+- **S3 `status.json` over API Gateway:** dashboard reads one static file; no backend to operate
+- **SNS over custom email:** email alerts only on failure; delivery handled by AWS, zero infrastructure
 
-## Setup Instructions
+-----
+
+## Failure Detection
+
+A check fails if any of these are true, evaluated in order:
+
+|Rule             |Condition                                         |
+|-----------------|--------------------------------------------------|
+|Network error    |Connection refused, DNS failure, timeout          |
+|Bad status code  |HTTP response outside 200–299                     |
+|Slow response    |Response time exceeds `RESPONSE_THRESHOLD_MS`     |
+|Missing content  |`EXPECTED_TEXT` set but not found in response body|
+|Forbidden content|`FORBIDDEN_TEXT` set and found in response body   |
+
+Content validation is the key addition over basic uptime checks. A maintenance page or broken deployment can still return HTTP 200. Checking for expected text catches what status codes miss.
+
+-----
+
+## Cost
+
+Expected cost is **near $0/month** for personal use.
+
+At 5-minute intervals: ~8,640 Lambda executions per month, ~8,640 DynamoDB writes, one `status.json` file (~1KB) overwritten each run. For this personal demo workload, the usage is far below typical Free Tier thresholds. SNS email alerts only fire during actual failures, keeping that usage minimal too.
+
+Cost stays low because: no always-on compute, S3 static dashboard instead of a hosted server, DynamoDB on-demand billing, Lambda runs only on schedule.
+
+-----
+
+## Setup
 
 ### Prerequisites
 
 - AWS account
-- GitHub repository
-- Python 3.12 or compatible Python version
-- AWS region used: `ap-northeast-1`
+- Python 3.12+
+- Region: `ap-northeast-1`
 
-### AWS Resources To Create
+### AWS Resources
 
-- DynamoDB table: `website_checks`
-- SNS topic: `uptime-alerts`
-- IAM role: `uptime-monitor-lambda-role`
-- Lambda function: `website-uptime-check`
-- EventBridge schedule: `uptime-check-every-5-min`
-- S3 bucket for static dashboard and `status.json`
+|Resource        |Name                               |
+|----------------|-----------------------------------|
+|DynamoDB table  |`website_checks`                   |
+|SNS topic       |`uptime-alerts`                    |
+|IAM role        |`uptime-monitor-lambda-role`       |
+|Lambda function |`website-uptime-check`             |
+|EventBridge rule|`uptime-check-every-5-min`         |
+|S3 bucket       |globally unique name of your choice|
 
 ### Lambda Environment Variables
 
-- `TARGET_URL`
-- `TIMEOUT_SECONDS`
-- `RESPONSE_THRESHOLD_MS`
-- `SNS_TOPIC_ARN`
-- `DYNAMODB_TABLE`
-- `S3_BUCKET`
-- `S3_STATUS_KEY`
-- `SITE_ID`
-- `EXPECTED_TEXT`
-- `FORBIDDEN_TEXT`
+|Variable               |Description                               |Default               |
+|-----------------------|------------------------------------------|----------------------|
+|`TARGET_URL`           |URL to monitor                            |required              |
+|`TIMEOUT_SECONDS`      |Request timeout                           |`10`                  |
+|`RESPONSE_THRESHOLD_MS`|Max acceptable response time (ms)         |`3000`                |
+|`SNS_TOPIC_ARN`        |ARN for failure alerts                    |required              |
+|`DYNAMODB_TABLE`       |Table name                                |`website_checks`      |
+|`S3_BUCKET`            |Dashboard bucket name                     |required for dashboard|
+|`S3_STATUS_KEY`        |Key for status file                       |`status.json`         |
+|`SITE_ID`              |Identifier stored with each check         |`my-portfolio`        |
+|`EXPECTED_TEXT`        |Text that must appear in response body    |optional              |
+|`FORBIDDEN_TEXT`       |Text that must not appear in response body|optional              |
 
-### Deployment Flow
+### Deploy
 
-1. Package Lambda code.
-2. Upload/update Lambda code.
-3. Configure environment variables.
-4. Upload dashboard files to S3.
-5. Run a manual Lambda test.
-6. Confirm DynamoDB writes.
-7. Confirm `status.json` updates.
-8. Confirm dashboard loads.
+```bash
+# Package Lambda
+cd lambda
+zip -r ../lambda-deploy.zip .
 
-### Validation Checklist
+# Upload to Lambda
+aws lambda update-function-code \
+  --function-name website-uptime-check \
+  --zip-file fileb://../lambda-deploy.zip
 
-- Healthy URL returns UP.
-- Broken URL returns DOWN.
-- Missing `EXPECTED_TEXT` returns DOWN.
-- SNS alert email is received.
-- Dashboard shows latest status and recent failures.
+# Upload dashboard to S3
+aws s3 sync dashboard/ s3://your-bucket-name/
+```
 
-## Architecture
+### Validate
 
-![Architecture](docs/architecture.png)
+Run these manual Lambda tests before relying on the schedule:
 
-EventBridge runs every 5 minutes. Lambda checks the target website and validates HTTP status, response time, expected text, and forbidden text. Results are stored in DynamoDB, and the latest status is written to S3 `status.json`. The static S3 dashboard reads `status.json`. SNS sends an email alert only when the check fails.
+- Healthy URL → `is_success: true` in DynamoDB, no SNS alert sent
+- Broken URL → `is_success: false` in DynamoDB, SNS email received
+- Low `RESPONSE_THRESHOLD_MS` → slow response detected, SNS email received
+- Mismatched `EXPECTED_TEXT` → content failure on HTTP 200, `is_success: false`
 
-## Cost Breakdown
+-----
 
-This project is designed to stay very low cost for a small personal monitoring workload.
+## DynamoDB Schema
 
-Estimated monthly usage:
+```
+website_checks
+├── site_id              (partition key)
+├── check_time           (sort key, ISO 8601)
+├── url
+├── status_code
+├── response_time_ms
+├── is_success
+├── failure_reason
+└── content_check_passed
+```
 
-- EventBridge schedule: runs every 5 minutes
-- Lambda executions: about 8,640 checks per month
-- DynamoDB: one small item written per check, plus small reads for recent failures
-- S3: one small `status.json` file plus static dashboard files
-- SNS: email alerts only when failures happen
+-----
 
-Expected cost for this project:
+## IAM Policy (least privilege)
 
-- Usually $0 or very close to $0 for personal/demo usage
-- Main reason: monthly usage is far below typical AWS Free Tier limits for Lambda and EventBridge Scheduler
-- DynamoDB and S3 data size are very small
-- SNS email alerts are only sent during failures
+The Lambda role is granted exactly what it needs:
 
-Cost control choices:
+|Permission           |Scope                      |
+|---------------------|---------------------------|
+|`dynamodb:PutItem`   |`website_checks` ARN only  |
+|`dynamodb:Query`     |`website_checks` ARN only  |
+|`sns:Publish`        |`uptime-alerts` ARN only   |
+|`s3:PutObject`       |`<bucket>/status.json` only|
+|CloudWatch Logs write|Lambda execution logs      |
 
-- Serverless design, no always-running EC2 instance
-- S3 static dashboard instead of a hosted frontend server
-- DynamoDB on-demand table for small and unpredictable usage
-- Lambda runs only on schedule, not continuously
-- `status.json` is tiny and overwritten each check
-- Recent failures are limited to the latest 5 items
+No broad application permissions. DynamoDB, SNS, and S3 are each scoped to a specific ARN.
 
-Cost notes:
+-----
 
-- Actual billing depends on AWS region, account Free Tier eligibility, request volume, stored data size, and alert volume.
-- For production use, AWS Budgets and billing alarms should be configured.
-- Pricing should always be checked against the official AWS pricing pages.
+## CloudWatch Logs
+
+![CloudWatch](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/cloudwatch-logs.png)
+
+-----
 
 ## Known Limitations
 
-- The monitor currently checks one target website.
-- Alerts currently depend on Lambda execution. If Lambda/EventBridge stops running, a separate CloudWatch alarm would be needed.
-- The dashboard is not real-time. It reflects the latest `status.json` written by Lambda.
-- SNS alerts are sent on failure events, so repeated failures may create repeated emails.
-- No authentication is added to the public S3 dashboard because this is a portfolio/demo project.
-- Historical analytics are limited. Uptime percentage, trend charts, and incident counts are future improvements.
-- The dashboard uses a static `status.json` file instead of an API backend to keep the project simple and low cost.
+- Monitors one target URL. Multi-site support is the natural next step, with each site getting its own `site_id`.
+- Dashboard reflects the last `status.json` write, not a live stream. Staleness is visible via the last-checked timestamp.
+- Alerts fire on every failure. A consecutive-failure threshold to reduce noise is a planned improvement.
+- No dashboard authentication, which is acceptable for a public portfolio demo but not for production.
+- If Lambda or EventBridge stops running silently, there is no dead-man’s switch. A CloudWatch alarm on invocation count would catch this.
+
+-----
 
 ## Lessons Learned
 
-- Serverless Lambda is a good fit for scheduled uptime monitoring because it runs only when checks are needed and does not require maintaining an always-on server.
-- DynamoDB works well for append-only check history because each monitor run can write a small timestamped item with predictable access patterns.
-- S3 `status.json` is enough for a simple low-cost dashboard because the dashboard only needs the latest published monitor state.
-- EventBridge can replace a traditional cron job by running Lambda on a managed schedule.
-- IAM least-privilege matters for portfolio projects because it shows that the system grants only the permissions each service needs.
-- SNS provides simple failure notification without building or operating a custom email system.
-- HTTP 200 is not always enough for monitoring. Content validation adds stronger monitoring by checking expected and forbidden page text.
-- Dashboard freshness should be visible with `last_checked` time so viewers know when the latest check ran.
-- Debugging `recent_failures` and `status.json` updates showed the importance of keeping stored history and the published dashboard state in sync.
+**HTTP 200 is not enough.** A CloudFront error page, maintenance placeholder, or broken deployment can all return 200. Content validation catches what status codes miss, and that is the real value of Phase 3.
 
-## Future Improvements
+**`status.json` and DynamoDB can silently diverge.** The dashboard showed DOWN, but `recent_failures` stayed empty because the Lambda was querying historical DynamoDB records but not injecting the current failed check into the S3 payload. Fix: write the current check result directly into `recent_failures` first, query DynamoDB for older failures, deduplicate by `check_time`, keep the latest 5.
 
-- Monitor multiple websites using separate `site_id` values.
-- Add uptime percentage per site.
-- Add average response time metric.
-- Add incident count for the last 24 hours and last 7 days.
-- Add consecutive-failure alert threshold to reduce email noise.
-- Add configurable redirect handling.
-- Add response time trend chart on the dashboard.
-- Improve dashboard UI for multiple sites.
-- Add DynamoDB TTL to automatically expire old check records.
-- Add CloudWatch alarm if Lambda/EventBridge stops running.
+**Static S3 beats API Gateway for a read-only dashboard.** One file, no backend, no cold starts on the read path. The only tradeoff is eventual consistency. The dashboard is as fresh as the last Lambda run.
 
-## Phase 1 AWS Setup
+**IAM scope matters even in personal projects.** Scoping permissions to specific ARNs forced a clear understanding of what each service actually needs, and that thinking comes up directly in systems design interviews.
 
-Use AWS region `ap-northeast-1` for all Phase 1 resources.
+-----
 
-### 1. Create DynamoDB table
+## What I’d Build Next
 
-- Table name: `website_checks`
-- Partition key: `site_id` as String
-- Sort key: `check_time` as String
-- Billing mode: On-demand
-- Wait until the table status is Active before moving on.
+- Multi-site monitoring with per-site `site_id` routing
+- Uptime percentage and incident count metrics per site
+- Response time trend chart on the dashboard (Chart.js)
+- Consecutive-failure alert threshold to reduce email noise
+- DynamoDB TTL to auto-expire old records
+- CloudWatch alarm if Lambda stops executing
 
-### 2. Create SNS topic and confirm email subscription
+-----
 
-- Topic name: `uptime-alerts`
-- Add an email subscription.
-- Open the confirmation email from AWS and confirm the subscription.
-- Save the SNS topic ARN for `SNS_TOPIC_ARN`.
+## Project Structure
 
-### 3. Create IAM role and least-privilege policy
-
-- Role name: `uptime-monitor-lambda-role`
-- Trusted service: Lambda
-- Add only the permissions needed for Phase 1:
-  - `dynamodb:PutItem` for the `website_checks` table
-  - `sns:Publish` for the `uptime-alerts` topic
-  - CloudWatch Logs permissions for Lambda logs
-  - `s3:PutObject` for the future dashboard `status.json` object only
-- Do not use broad `*` actions or broad `*` resources.
-
-### 4. Create Lambda function
-
-- Function name: `website-uptime-check`
-- Runtime: Python 3.12
-- Architecture: x86_64
-- Execution role: `uptime-monitor-lambda-role`
-- Timeout: 30 seconds
-- Memory: 128 MB
-
-Upload or paste the code from `lambda/app.py`.
-
-### 5. Configure Lambda environment variables
-
-Set these environment variables on `website-uptime-check`:
-
-|Variable|Value|
-|---|---|
-|`TARGET_URL`|Full website URL to monitor, such as `https://example.com`|
-|`TIMEOUT_SECONDS`|`10`|
-|`RESPONSE_THRESHOLD_MS`|`3000`|
-|`SNS_TOPIC_ARN`|ARN for `uptime-alerts`|
-|`DYNAMODB_TABLE`|`website_checks`|
-|`SITE_ID`|Short site name, such as `my-portfolio`|
-|`S3_BUCKET`|Optional until Phase 2|
-|`S3_STATUS_KEY`|`status.json`|
-
-`S3_BUCKET` can stay empty until the Phase 2 dashboard bucket exists. `S3_STATUS_KEY` can be `status.json`.
-
-### 6. Create EventBridge schedule
-
-- Rule name: `uptime-check-every-5-min`
-- Schedule expression: `rate(5 minutes)`
-- Target: Lambda function `website-uptime-check`
-- Allow EventBridge to invoke the Lambda function when prompted.
-
-### 7. Run manual validation checks
-
-Run these checks from the Lambda test page before relying on the schedule:
-
-- Test with a working URL and confirm a successful result is written to DynamoDB.
-- Test with an HTTP failure URL, such as `https://httpstat.us/500`, and confirm the result is failed and an SNS email is sent.
-- Test with a slow-response URL, such as `https://httpstat.us/200?sleep=5000`, and confirm the result fails when response time exceeds `RESPONSE_THRESHOLD_MS`.
-
-## Phase 2 S3 Dashboard Setup
-
-Use AWS region `ap-northeast-1` for all Phase 2 dashboard resources.
-
-Phase 1 intentionally skipped `S3_BUCKET` because the dashboard bucket did not exist yet. In Phase 2, create the S3 bucket first, then add `S3_BUCKET` to the Lambda configuration so Lambda can write `status.json`.
-
-### 1. Create S3 bucket
-
-- Open the AWS Console.
-- Go to S3.
-- Choose Create bucket.
-- Bucket name: `aman-uptime-dashboard`
-- If that name is unavailable, use a globally unique variation, such as `aman-uptime-dashboard-<short-random-suffix>`.
-- AWS Region: `ap-northeast-1`
-- Keep default settings for now unless a later step says to change them.
-- Create the bucket.
-
-### 2. Enable static website hosting
-
-- Open the new bucket.
-- Go to Properties.
-- Find Static website hosting.
-- Choose Edit.
-- Enable static website hosting.
-- Hosting type: Host a static website.
-- Index document: `index.html`
-- Save changes.
-- Copy the bucket website endpoint. You will use it to open the dashboard later.
-
-### 3. Upload dashboard files
-
-- Open the bucket.
-- Go to Objects.
-- Upload these files from the local `dashboard/` folder:
-  - `index.html`
-  - `style.css`
-  - `app.js`
-- Do not upload unrelated files.
-
-### 4. Configure public read access for required dashboard files only
-
-The dashboard must be publicly readable, but only for the required static files and `status.json`.
-
-- Open the bucket.
-- Go to Permissions.
-- Edit Block public access settings.
-- Disable public access blocking only as needed for this static website bucket.
-- Save changes and confirm.
-- Add a bucket policy that allows public `s3:GetObject` only for:
-  - `index.html`
-  - `style.css`
-  - `app.js`
-  - `status.json`
-
-Use your real bucket name in the resource ARNs:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "PublicReadDashboardFilesOnly",
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": "s3:GetObject",
-      "Resource": [
-        "arn:aws:s3:::aman-uptime-dashboard/index.html",
-        "arn:aws:s3:::aman-uptime-dashboard/style.css",
-        "arn:aws:s3:::aman-uptime-dashboard/app.js",
-        "arn:aws:s3:::aman-uptime-dashboard/status.json"
-      ]
-    }
-  ]
-}
+```
+website-uptime-monitor/
+├── lambda/
+│   ├── app.py
+│   ├── requirements.txt
+│   └── tests/
+│       └── test_app.py
+├── dashboard/
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
+└── docs/
+    ├── architecture.png
+    └── screenshots/
 ```
 
-If you used a different bucket name, replace `aman-uptime-dashboard` in all four ARNs.
+-----
 
-### 5. Update Lambda IAM role S3 permission
+## Interview Topics
 
-In Phase 1, the Lambda role used a placeholder S3 ARN for the future dashboard bucket. Replace that placeholder with the real bucket ARN for `status.json`.
+Questions this project is designed to answer:
 
-- Go to IAM.
-- Open role `uptime-monitor-lambda-role`.
-- Open the inline policy for the Lambda permissions.
-- Find the `s3:PutObject` statement.
-- Replace the placeholder resource with:
-
-```text
-arn:aws:s3:::aman-uptime-dashboard/status.json
-```
-
-If you used a different bucket name, replace `aman-uptime-dashboard` with your real bucket name.
-
-Keep this permission limited to `status.json` only. Do not grant write access to the whole bucket.
-
-### 6. Add S3_BUCKET environment variable to Lambda
-
-- Go to Lambda.
-- Open function `website-uptime-check`.
-- Go to Configuration.
-- Go to Environment variables.
-- Add or update:
-
-|Variable|Value|
-|---|---|
-|`S3_BUCKET`|`aman-uptime-dashboard`|
-|`S3_STATUS_KEY`|`status.json`|
-
-If you used a different bucket name, use that value for `S3_BUCKET`.
-
-### 7. Manually invoke Lambda and confirm status.json is written
-
-- Open the Lambda function `website-uptime-check`.
-- Use the existing manual test event.
-- Invoke the function.
-- Confirm the run succeeds.
-- Open the S3 bucket.
-- Confirm `status.json` exists in the bucket root.
-- Open `status.json` and confirm it contains the latest site status data.
-
-### 8. Open S3 website URL and confirm dashboard loads
-
-- Open the S3 static website endpoint copied from the bucket Properties page.
-- Confirm the dashboard page loads.
-- Confirm it can read `status.json`.
-- Confirm it shows the latest status from the Lambda run.
+- Why Lambda over a cron job on EC2?
+- Why DynamoDB over RDS for monitoring data?
+- Why `status.json` on S3 instead of API Gateway?
+- What does the IAM policy allow and why nothing broader?
+- How is `response_time_ms` measured and what does it represent?
+- What does content validation catch that HTTP status codes miss?
+- What happens if Lambda stops running silently?
+- How would you extend this to monitor 50 sites?
