@@ -57,7 +57,7 @@ function renderStatus(data) {
     : "Latest check failed.";
 
   renderSiteUrl(data.url);
-  elements.lastChecked.textContent = formatDateTime(data.last_checked || data.check_time);
+  elements.lastChecked.textContent = formatDateTime(data.checked_at || data.last_checked || data.check_time);
   elements.statusCode.textContent = formatStatusCode(data.status_code);
   renderResponseTime(data.response_time_ms);
   renderContentCheck(data.content_check_passed);
@@ -220,12 +220,12 @@ function createSiteCard(site) {
     ["Content", formatContentCheck(site.content_check_passed)],
     ["Uptime", formatPercent(site.uptime_percentage)],
     ["Average", formatResponseTime(site.average_response_time_ms)],
-    ["Incidents 24h", formatNumber(site.incident_count_24h)],
-    ["Incidents 7d", formatNumber(site.incident_count_7d)],
-    ["Consecutive", formatNumber(site.consecutive_failure_count)],
+    ["Incidents 24h", formatNumber(site.incidents_24h ?? site.incident_count_24h)],
+    ["Incidents 7d", formatNumber(site.incidents_7d ?? site.incident_count_7d)],
+    ["Consecutive", formatNumber(site.consecutive_failures ?? site.consecutive_failure_count)],
     ["Alert Sent", formatBoolean(site.alert_sent)],
     ["Redirect Policy", site.redirect_policy || "follow"],
-    ["Redirect Seen", formatBoolean(site.redirect_detected)],
+    ["Redirect Seen", formatBoolean(site.redirect_seen ?? site.redirect_detected)],
   ].forEach(([label, value]) => {
     details.appendChild(createSiteDetail(label, value));
   });
@@ -277,28 +277,50 @@ function renderResponseTrend(data) {
     return;
   }
 
+  const barValueLabelsPlugin = {
+    id: "barValueLabels",
+    afterDatasetsDraw(chart) {
+      const { ctx, data } = chart;
+      ctx.save();
+      ctx.font = "bold 12px Inter, ui-sans-serif, system-ui, sans-serif";
+      ctx.fillStyle = "oklch(41% 0.17 151)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      data.datasets.forEach((dataset, datasetIndex) => {
+        const meta = chart.getDatasetMeta(datasetIndex);
+        meta.data.forEach((bar, index) => {
+          const value = dataset.data[index];
+          if (value != null) {
+            ctx.fillText(`${value} ms`, bar.x, bar.y - 4);
+          }
+        });
+      });
+      ctx.restore();
+    },
+  };
+
   responseTrendChart = new Chart(elements.responseTrendChart, {
-    type: "line",
+    type: "bar",
+    plugins: [barValueLabelsPlugin],
     data: {
       labels: chartData.labels,
       datasets: [
         {
           label: "Response time (ms)",
           data: chartData.values,
-          borderColor: "#235a82",
-          backgroundColor: "rgba(35, 90, 130, 0.14)",
-          pointBackgroundColor: "#235a82",
-          pointBorderColor: "#fbfcf8",
-          pointRadius: 5,
-          pointHoverRadius: 6,
-          tension: 0.28,
-          fill: true,
+          borderColor: "#159947",
+          backgroundColor: "rgba(21, 153, 71, 0.78)",
+          borderRadius: 6,
+          borderWidth: 1,
         },
       ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: { top: 24 },
+      },
       plugins: {
         legend: {
           display: false,
@@ -317,6 +339,9 @@ function renderResponseTrend(data) {
         },
         y: {
           beginAtZero: true,
+          grid: {
+            color: "rgba(24, 99, 67, 0.12)",
+          },
           ticks: {
             callback: (value) => `${value} ms`,
           },

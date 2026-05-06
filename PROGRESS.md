@@ -20,6 +20,7 @@
 - Recent Failures now working
 - Post 6 screenshots are ready
 - Phase 4 completed
+- Dashboard chart accuracy fix completed
 
 ## Completed Task History
 
@@ -49,6 +50,7 @@
 - Completed Phase 4E incident count per site for last 24h and last 7 days.
 - Completed Phase 4E incident count AWS validation.
 - Completed Phase 4 final checklist review and completion summary.
+- Fixed dashboard chart accuracy label and chart type.
 
 ## Process Notes / Problems Solved
 
@@ -833,6 +835,19 @@
   8. Confirmed the multi-site dashboard UI was implemented and live-validated on the S3 dashboard.
   9. Confirmed the DynamoDB TTL attribute was implemented, validated in AWS, and enabled on `website_checks`.
 - Final result: Phase 4 is complete. All listed Phase 4 improvement items are checked in `TASKS.md` and have matching recorded implementation or validation notes in `PROGRESS.md`.
+- Next step: Start Phase 5 final portfolio refresh / README update.
+
+### Dashboard chart accuracy fix
+
+- Task name: Dashboard chart accuracy fix
+- What was done: Renamed the dashboard chart from "Response Time Trend" to "Latest Response Time per Site" and changed the Chart.js chart from a line chart to a bar chart.
+- Problem faced: The chart used only the latest `status.json` values, so the previous trend label and line chart implied historical data that the dashboard does not fetch.
+- How it was solved:
+  1. Updated the chart heading and canvas accessibility label in `dashboard/index.html`.
+  2. Changed the Chart.js chart type in `dashboard/app.js` from `line` to `bar`.
+  3. Kept the existing `status.json`-only data path, one item per site when `sites` is present, and single-site fallback behavior.
+  4. Kept summary cards, per-site cards, Recent Failures, Content Check, backend code, and AWS resources unchanged.
+- Final result: The dashboard chart now accurately presents latest response time per site using one bar per site or one bar for the single-site fallback.
 - Next step: Start Phase 5 final portfolio refresh / README update.
 
 ## Ongoing Rule
