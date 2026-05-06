@@ -45,26 +45,87 @@ function setLoadingState() {
 }
 
 function renderStatus(data) {
+  const sites = Array.isArray(data.sites) ? data.sites : [];
+  const isMultiSite = sites.length > 0;
   const isUp = data.is_success === true || data.status === "UP";
-  const statusText = isUp ? "UP" : "DOWN";
 
   elements.statusBadge.className = `status-badge ${isUp ? "status-up" : "status-down"}`;
-  elements.statusBadge.textContent = statusText;
+  elements.statusBadge.textContent = isUp ? "UP" : "DOWN";
 
   elements.messagePanel.className = `message-panel ${isUp ? "success" : "error"}`;
   elements.messagePanel.textContent = isUp
-    ? "Latest check passed."
-    : "Latest check failed.";
+    ? "All sites are up."
+    : "One or more sites are down.";
 
-  renderSiteUrl(data.url);
-  elements.lastChecked.textContent = formatDateTime(data.checked_at || data.last_checked || data.check_time);
-  elements.statusCode.textContent = formatStatusCode(data.status_code);
-  renderResponseTime(data.response_time_ms);
-  renderContentCheck(data.content_check_passed);
-  renderFailureReason(isUp, data.failure_reason);
+  if (isMultiSite) {
+    renderTopCardsMultiSite(data, sites);
+  } else {
+    renderTopCardsSingleSite(data);
+  }
+
+  renderFailureReason(isMultiSite || isUp, data.failure_reason);
   renderMultiSitePanel(data);
   renderResponseTrend(data);
-  renderRecentFailures(data.recent_failures);
+  renderRecentFailures(data, sites);
+}
+
+function renderTopCardsSingleSite(data) {
+  const siteUrlCard = elements.siteUrl.closest("article");
+  if (siteUrlCard) siteUrlCard.querySelector(".metric-label").textContent = "Site URL";
+  elements.siteUrl.className = "metric-value link-value";
+  renderSiteUrl(data.url);
+
+  elements.lastChecked.textContent = formatDateTime(data.checked_at || data.last_checked || data.check_time);
+
+  const statusCodeCard = elements.statusCode.closest("article");
+  if (statusCodeCard) statusCodeCard.querySelector(".metric-label").textContent = "HTTP Status";
+  elements.statusCode.className = "metric-value";
+  elements.statusCode.textContent = formatStatusCode(data.status_code);
+
+  const responseCard = elements.responseTime.closest("article");
+  if (responseCard) responseCard.querySelector(".metric-label").textContent = "Response Time";
+  renderResponseTime(data.response_time_ms);
+
+  const contentCard = elements.contentCheck.closest("article");
+  if (contentCard) contentCard.querySelector(".metric-label").textContent = "Content Check";
+  renderContentCheck(data.content_check_passed);
+}
+
+function renderTopCardsMultiSite(data, sites) {
+  const upCount = sites.filter(isSiteUp).length;
+  const downCount = sites.length - upCount;
+  const checkedAt = formatDateTime(data.checked_at || data.last_checked || data.check_time);
+
+  // Card 1 (wide): repurpose as "Monitored Sites" overview
+  const siteUrlCard = elements.siteUrl.closest("article");
+  if (siteUrlCard) {
+    siteUrlCard.querySelector(".metric-label").textContent = "Monitored Sites";
+    elements.siteUrl.textContent = `${sites.length} site${sites.length !== 1 ? "s" : ""} tracked`;
+    elements.siteUrl.removeAttribute("href");
+    elements.siteUrl.className = "metric-value";
+  }
+
+  elements.lastChecked.textContent = checkedAt;
+
+  // Card 3: UP count
+  const statusCodeCard = elements.statusCode.closest("article");
+  if (statusCodeCard) statusCodeCard.querySelector(".metric-label").textContent = "UP";
+  elements.statusCode.textContent = upCount;
+  elements.statusCode.className = "metric-value response-fast";
+
+  // Card 4: DOWN count
+  const responseCard = elements.responseTime.closest("article");
+  if (responseCard) responseCard.querySelector(".metric-label").textContent = "DOWN";
+  elements.responseTime.className = "metric-value" + (downCount > 0 ? " response-slow" : " response-fast");
+  elements.responseTime.textContent = downCount;
+
+  // Card 5: overall uptime across all sites
+  const contentCard = elements.contentCheck.closest("article");
+  if (contentCard) contentCard.querySelector(".metric-label").textContent = "Avg Uptime";
+  const uptimes = sites.map((s) => Number(s.uptime_percentage)).filter(Number.isFinite);
+  elements.contentCheck.textContent = uptimes.length
+    ? `${(uptimes.reduce((a, b) => a + b, 0) / uptimes.length).toFixed(1)}%`
+    : "--";
 }
 
 function renderSiteUrl(url) {
@@ -120,10 +181,34 @@ function renderFailureReason(isUp, failureReason) {
   elements.failurePanel.classList.remove("is-hidden");
 }
 
-function renderRecentFailures(recentFailures) {
+function renderRecentFailures(data, sites) {
   elements.recentFailures.replaceChildren();
 
-  if (!Array.isArray(recentFailures) || recentFailures.length === 0) {
+  let failures;
+
+  if (sites.length > 0) {
+    failures = [];
+    sites.forEach((site) => {
+      if (Array.isArray(site.recent_failures) && site.recent_failures.length > 0) {
+        site.recent_failures.forEach((f) => {
+          failures.push({ ...f, _site_id: site.site_id || site.url, _url: site.url });
+        });
+      } else if (!isSiteUp(site)) {
+        failures.push({
+          _site_id: site.site_id || site.url,
+          _url: site.url,
+          check_time: data.checked_at || data.last_checked || data.check_time,
+          status_code: site.status_code,
+          response_time_ms: site.response_time_ms,
+          failure_reason: site.failure_reason,
+        });
+      }
+    });
+  } else {
+    failures = Array.isArray(data.recent_failures) ? data.recent_failures : [];
+  }
+
+  if (failures.length === 0) {
     const emptyItem = document.createElement("li");
     emptyItem.className = "empty-state";
     emptyItem.textContent = "No recent failures available.";
@@ -131,13 +216,16 @@ function renderRecentFailures(recentFailures) {
     return;
   }
 
-  recentFailures.slice(0, 5).forEach((failure) => {
+  failures.slice(0, 10).forEach((failure) => {
     const item = document.createElement("li");
     item.className = "failure-item";
 
     const time = document.createElement("span");
     time.className = "failure-time";
-    time.textContent = formatDateTime(failure.check_time || failure.last_checked);
+
+    const siteLabel = failure._site_id ? `[${failure._site_id}] ` : "";
+    const timeStr = formatDateTime(failure.check_time || failure.last_checked || failure.checked_at);
+    time.textContent = siteLabel + timeStr;
 
     const status = document.createElement("span");
     status.className = "failure-meta";
@@ -373,6 +461,7 @@ function renderError(error) {
   elements.messagePanel.textContent = `${error.message}. Confirm status.json exists in the same S3 bucket and is publicly readable.`;
   renderMultiSitePanel({});
   renderResponseTrend({});
+  renderRecentFailures({}, []);
 }
 
 function isSiteUp(site) {

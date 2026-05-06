@@ -850,10 +850,28 @@
 - Final result: The dashboard chart now accurately presents latest response time per site using one bar per site or one bar for the single-site fallback.
 - Next step: Start Phase 5 final portfolio refresh / README update.
 
+### Multi-site failure display and top summary cards fix
+
+- Task name: Multi-site failure display and top summary cards fix
+- What was done: Fixed Recent Failures aggregation in multi-site mode; fixed top summary cards to show multi-site system-level data instead of the first site's single-site data; added mode-aware rendering for top cards; kept single-site behavior unchanged.
+- Problem faced: In multi-site DOWN state, the Recent Failures section showed "No recent failures available." because `renderRecentFailures` only read `data.recent_failures` at the top level, which is always empty in multi-site mode. The top summary cards (Site URL, HTTP Status, Response Time, Content Check) showed the first site's values, making it look like the whole system was healthy when it was not.
+- How it was solved, step by step:
+  1. Detected multi-site mode from `data.sites.length > 0` at the start of `renderStatus`.
+  2. Changed `renderRecentFailures` signature to `(data, sites)` so it can access all sites.
+  3. In multi-site mode: iterated all sites; used `site.recent_failures` if non-empty (tagged with `site_id`); synthesized a failure row from the current site fields when the site is DOWN and has no `recent_failures` stored.
+  4. In single-site mode: used `data.recent_failures` as before.
+  5. Added `renderTopCardsMultiSite(data, sites)` to replace top card content with system-level summary: "Monitored Sites" count, Last Checked, UP count (green), DOWN count (red), and average uptime across all sites.
+  6. Added `renderTopCardsSingleSite(data)` to reset card labels and values back to per-site defaults on single-site payloads, so switching between modes stays correct.
+  7. Suppressed the top-level `failurePanel` in multi-site mode (each site card already shows its own failure reason).
+  8. Updated `renderError` to call `renderRecentFailures({}, [])` with the new signature.
+  9. Updated `dashboard/status.json` local mock to include a DOWN second site with real failure data so the fix can be tested locally without deploying to AWS.
+- Final result: Multi-site DOWN state now shows failures in Recent Failures. Top summary cards correctly show system-level counts instead of one site's data. Single-site mode is unchanged. Local mock `status.json` has a DOWN site for local testing.
+- Next step: Upload updated `dashboard/app.js` to S3, trigger a multi-site DOWN test in AWS, confirm Recent Failures shows the failed site, confirm top cards show system totals, restore healthy state.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Start Phase 5 final portfolio refresh / README update.
+- Upload updated dashboard files to S3 and validate multi-site DOWN display live.
