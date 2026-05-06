@@ -238,23 +238,23 @@ Run each test in order. Do not proceed to Phase 2 until all pass.
 
 Before starting Phase 4, resolve the open design decisions from PRD Section 20:
 
-- [ ] Decide: should redirects count as success or be a configurable rule?
-- [ ] Decide: should alerts fire on first failure or after N consecutive failures?
-- [ ] Decide: how many recent failures to show (PRD default is 5)?
-- [ ] Decide: one shared DynamoDB table with `site_id` as partition key, or separate tables per site?
-- [ ] Decide: should Lambda retry once on timeout before marking a check failed?
+- [x] Resolved: redirects count as success when the final resolved response is 2xx. Keep current `urllib` redirect behaviour. Add configurable redirect handling later in Phase 4 with a setting such as `redirect_policy`.
+- [x] Resolved: alerts should fire only after a consecutive-failure threshold. Default threshold is 2 consecutive failures to reduce alert noise.
+- [x] Resolved: keep the latest 5 recent failures in `status.json` and on the dashboard.
+- [x] Resolved: use one shared DynamoDB table, `website_checks`, with `site_id` as the partition key and `check_time` as the sort key. Do not create separate tables per site.
+- [x] Resolved: retry once only for timeout or network-level errors before marking the check failed. Do not retry HTTP status failures, slow responses, or content validation failures.
 
 Then build:
 
-- [ ] Support monitoring multiple websites (list of site configs, each with own `site_id`, `target_url`, thresholds)
-- [ ] Calculate and store uptime percentage per site
-- [ ] Add average response time metric per site
-- [ ] Add incident count per site (last 24h and last 7 days)
-- [ ] Add consecutive-failure threshold before alerting (reduce noise)
-- [ ] Add configurable redirect handling
-- [ ] Add response time trend chart using Chart.js on dashboard
-- [ ] Improve dashboard UI for multiple sites
-- [ ] Add DynamoDB TTL attribute to expire old records (PRD Section 19)
+- [x] Support monitoring multiple websites (list of site configs, each with own `site_id`, `target_url`, thresholds)
+- [x] Calculate and store uptime percentage per site
+- [x] Add average response time metric per site
+- [x] Add incident count per site (last 24h and last 7 days)
+- [x] Add consecutive-failure threshold before alerting (reduce noise)
+- [x] Add configurable redirect handling
+- [x] Add response time trend chart using Chart.js on dashboard
+- [x] Improve dashboard UI for multiple sites
+- [x] Add DynamoDB TTL attribute to expire old records (PRD Section 19)
 
 -----
 
@@ -285,11 +285,11 @@ Then build:
 
 |Decision                                                            |Status        |Resolution       |
 |--------------------------------------------------------------------|--------------|-----------------|
-|Should redirects count as success in MVP?                           |Open          |                 |
-|Should alerts fire on first failure or after N consecutive failures?|Open          |                 |
-|How many recent failures on dashboard?                              |Defaulted to 5|Confirm or change|
-|One shared DynamoDB table or separate tables per site?              |Open          |                 |
-|Should Lambda retry once on timeout before failing?                 |Open          |                 |
+|Should redirects count as success in MVP?                           |Resolved      |Final resolved 2xx response counts as success. Keep current `urllib` behaviour. Add configurable redirect handling later in Phase 4 with a setting such as `redirect_policy`.|
+|Should alerts fire on first failure or after N consecutive failures?|Resolved      |Use a consecutive-failure threshold before sending SNS alerts. Default is 2 consecutive failures to reduce alert noise.|
+|How many recent failures on dashboard?                              |Resolved      |Keep latest 5 recent failures in `status.json` and on the dashboard.|
+|One shared DynamoDB table or separate tables per site?              |Resolved      |Use one shared DynamoDB table, `website_checks`, with `site_id` as the partition key and `check_time` as the sort key. Do not create separate tables per site.|
+|Should Lambda retry once on timeout before failing?                 |Resolved      |Retry once only for timeout or network-level errors before marking the check failed. Do not retry HTTP status failures, slow responses, or content validation failures.|
 
 -----
 

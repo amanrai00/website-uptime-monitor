@@ -44,9 +44,42 @@
           </article>
         </section>
 
+        <section id="multiSitePanel" class="multi-site-section is-hidden" aria-labelledby="multi-site-title">
+          <div class="section-heading">
+            <h2 id="multi-site-title">Monitored Sites</h2>
+            <span id="siteSummaryNote">0 sites</span>
+          </div>
+          <div class="site-summary-grid" aria-label="Multi-site summary">
+            <article class="metric-card compact-card">
+              <span class="metric-label">Total Sites</span>
+              <span id="totalSites" class="metric-value">--</span>
+            </article>
+            <article class="metric-card compact-card">
+              <span class="metric-label">UP Sites</span>
+              <span id="upSites" class="metric-value response-fast">--</span>
+            </article>
+            <article class="metric-card compact-card">
+              <span class="metric-label">DOWN Sites</span>
+              <span id="downSites" class="metric-value response-slow">--</span>
+            </article>
+          </div>
+          <div id="siteCards" class="site-card-list"></div>
+        </section>
+
         <section id="failurePanel" class="failure-panel is-hidden" aria-label="Failure reason">
           <h2>Failure Reason</h2>
           <p id="failureReason">--</p>
+        </section>
+
+        <section class="chart-section" aria-labelledby="response-trend-title">
+          <div class="section-heading">
+            <h2 id="response-trend-title">Response Time Trend</h2>
+            <span>Latest check per site</span>
+          </div>
+          <div class="chart-card">
+            <canvas id="responseTrendChart" aria-label="Response time trend chart" role="img"></canvas>
+            <p id="responseTrendEmpty" class="empty-state chart-empty is-hidden">No response time data available.</p>
+          </div>
         </section>
 
         <section class="recent-section" aria-labelledby="recent-failures-title">
@@ -61,6 +94,7 @@
       </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <script src="app.js" defer></script>
   </body>
 </html>

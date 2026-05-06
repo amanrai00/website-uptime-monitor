@@ -5,10 +5,11 @@
 - Phase 0: Repository setup
 - Phase 1: Monitoring Engine
 - Phase 2: S3 Dashboard
+- Phase 4: Improvements
 
 ## Current Phase
 
-- LinkedIn Post 5 cost breakdown preparation
+- Phase 5 final portfolio refresh / README update
 
 ## Current Status
 
@@ -18,6 +19,7 @@
 - UP and DOWN dashboard states verified
 - Recent Failures now working
 - Post 6 screenshots are ready
+- Phase 4 completed
 
 ## Completed Task History
 
@@ -39,6 +41,14 @@
 - Created S3 dashboard bucket, uploaded dashboard files, enabled status.json write, and confirmed dashboard loads.
 - Tested dashboard UP and DOWN states successfully.
 - Verified Recent Failures dashboard fix and confirmed Post 6 screenshots are ready.
+- Completed Phase 4B multi-site AWS validation.
+- Completed Phase 4C uptime percentage calculation per site.
+- Completed Phase 4C uptime percentage AWS validation.
+- Completed Phase 4D average response time metric per site.
+- Completed Phase 4D average response time AWS validation.
+- Completed Phase 4E incident count per site for last 24h and last 7 days.
+- Completed Phase 4E incident count AWS validation.
+- Completed Phase 4 final checklist review and completion summary.
 
 ## Process Notes / Problems Solved
 
@@ -477,10 +487,358 @@
 - Final result: Phase 5 portfolio polish is complete for the first portfolio pass, with the optional demo GIF/screen recording deferred.
 - Next step: Review final README, then merge phase-5-portfolio-polish into main and push.
 
+### Phase 4 open design decisions resolved
+
+- Task name: Phase 4 open design decisions resolved
+- What was done: Updated `TASKS.md` and resolved the Phase 4 open design decisions in both the Phase 4 checklist and Open Design Decisions Tracker.
+- Problem faced: Phase 4 should not start with coding until the design decisions are locked.
+- How it was solved:
+  1. Confirmed redirects will count as success when the final resolved response is 2xx.
+  2. Set the alert strategy to use a consecutive-failure threshold, default 2 failures.
+  3. Confirmed recent failures will remain latest 5.
+  4. Confirmed one shared DynamoDB table, `website_checks`, using `site_id` and `check_time`.
+  5. Confirmed Lambda should retry once only for timeout or network-level errors.
+  6. Left Phase 4 build items unchecked because implementation has not started yet.
+- Final result: Phase 4 decisions are now locked and ready for implementation planning.
+- Next step: Start Phase 4B by adding multi-site config support in Lambda.
+
+### Phase 4B multi-site Lambda config support
+
+- Task name: Phase 4B multi-site Lambda config support
+- What was done: Added Lambda support for `SITES_CONFIG`; kept single-site environment variable fallback; updated S3 `status.json` output to include a `sites` array when multiple sites are checked; added minimal tests for multi-site config parsing and single-site backward compatibility; marked the Phase 4 multi-site Lambda support checklist item complete in `TASKS.md`.
+- Problem faced: Lambda needed to support multiple websites from one run without changing the dashboard UI, AWS resource names, DynamoDB table design, alert threshold behavior, or Phase 4 metrics work.
+- How it was solved:
+  1. Added `SITES_CONFIG` JSON array parsing and validation for per-site `site_id`, `target_url`, timeout, response threshold, expected text, and forbidden text.
+  2. Preserved current single-site behavior when `SITES_CONFIG` is missing or empty.
+  3. Reused the existing DynamoDB write, recent failures, SNS alert, HTTP redirect, response validation, and content validation paths for each site.
+  4. Kept the single-site `status.json` payload shape unchanged, and added a `sites` array only when multiple sites are checked.
+  5. Added minimal tests for config parsing and single-site fallback.
+  6. Left uptime percentage, average response time, incident count, charts, TTL, dashboard redesign, and alert threshold items untouched.
+- Final result: One Lambda invocation can now check multiple configured sites while staying backward compatible with the existing single-site environment configuration.
+- Next step: Plan the next Phase 4 item, likely uptime percentage calculation per site.
+
+### Phase 4B multi-site AWS validation
+
+- Task name: Phase 4B multi-site AWS validation
+- What was done: Validated the Phase 4B multi-site Lambda behavior in AWS after adding `SITES_CONFIG` to the Lambda environment variables.
+- Problem faced: The first Lambda test still returned the old single-site `my-portfolio` result because the updated Phase 4B `app.py` code had not been uploaded to AWS yet.
+- How it was solved:
+  1. Added `SITES_CONFIG` to the AWS Lambda environment variables.
+  2. Ran the first Lambda test and confirmed it still returned single-site `my-portfolio`.
+  3. Checked the AWS Lambda code and confirmed `SITES_CONFIG` was not found there.
+  4. Created a new Lambda ZIP containing the updated `app.py`.
+  5. Uploaded the new ZIP to AWS Lambda.
+  6. Ran Lambda again and confirmed the response returned a multi-site `sites` array.
+  7. Confirmed the healthy multi-site test passed for `example-main` and `example-second`.
+  8. Confirmed DynamoDB stored separate items for `example-main` and `example-second`.
+  9. Ran a mixed test and confirmed `example-main` was healthy while `example-failed` returned HTTP 404.
+  10. Confirmed an SNS alert email was received for `example-failed` DOWN.
+  11. Confirmed DynamoDB stored failed-site records for `example-failed`.
+  12. Restored `SITES_CONFIG` back to healthy `example-main` and `example-second`.
+  13. Ran Lambda one final time and confirmed both sites were healthy again.
+- Final result: Phase 4B multi-site AWS validation is complete. AWS Lambda now runs the updated multi-site code, writes separate DynamoDB records per site, returns a multi-site `sites` array, alerts on a failed site, and is restored to the healthy two-site configuration.
+- Next step: Start Phase 4C by adding uptime percentage calculation per site.
+
+### Phase 4C uptime percentage calculation per site
+
+- Task name: Phase 4C uptime percentage calculation per site
+- What was done: Added uptime percentage metrics for each monitored site. Each site result now includes `uptime_percentage` and `uptime_window_checks`; the fields are included in the Lambda return output, the S3 `status.json` site payloads, and the DynamoDB result item.
+- Problem faced: Uptime had to be calculated per `site_id` only, include the current check result, avoid changing multi-site config, dashboard behavior, recent failures, SNS alerts, or future Phase 4 metrics, and keep DynamoDB writes compatible with numeric percentage values.
+- How it was solved:
+  1. Added a recent-result query for the current `site_id` only.
+  2. Added a small uptime calculator using `successful checks / total checks * 100`.
+  3. Included the current check result plus recent stored records in the calculation.
+  4. Rounded `uptime_percentage` to 2 decimal places.
+  5. Added `uptime_window_checks` to show how many checks were used.
+  6. Attached uptime metrics to the result before writing to DynamoDB.
+  7. Converted float values to DynamoDB-safe decimals during DynamoDB writes.
+  8. Added minimal unit tests for uptime percentage math and same-site filtering.
+  9. Marked the Phase 4 uptime percentage checklist item complete in `TASKS.md`.
+- Final result: Phase 4C is implemented. Multi-site Lambda output and S3 site payloads now report uptime percentage per site, and DynamoDB can store the current result with the uptime fields.
+- Next step: Start Phase 4D by adding average response time metric per site.
+
+### Phase 4C uptime percentage AWS validation
+
+- Task name: Phase 4C uptime percentage AWS validation
+- What was done: Deployed the updated Lambda ZIP with Phase 4C uptime percentage code and validated the uptime fields in AWS Lambda, S3 `status.json`, and DynamoDB.
+- Problem faced: Needed to confirm the new uptime fields were working in the deployed AWS environment, not only in local code, and that each site received its own uptime calculation.
+- How it was solved:
+  1. Deployed the updated Lambda ZIP with the Phase 4C uptime percentage code.
+  2. Ran Lambda with the healthy multi-site `SITES_CONFIG`.
+  3. Confirmed Lambda output included `uptime_percentage` and `uptime_window_checks` for each site.
+  4. Confirmed `example-main` returned `uptime_percentage=100` and `uptime_window_checks=11`.
+  5. Confirmed `example-second` returned `uptime_percentage=100` and `uptime_window_checks=9`.
+  6. Checked S3 `status.json` and confirmed `uptime_percentage` and `uptime_window_checks` appear at the top level and inside the multi-site `sites` array.
+  7. Checked the latest DynamoDB item for `example-main` and confirmed `uptime_percentage=100` and `uptime_window_checks=11`.
+  8. Checked the latest DynamoDB item for `example-second` and confirmed `uptime_percentage=100` and `uptime_window_checks=9`.
+- Final result: Phase 4C AWS validation is complete. Uptime percentage and uptime window count are confirmed in Lambda output, S3 `status.json`, and DynamoDB for both monitored sites.
+- Next step: Start Phase 4D by adding average response time metric per site.
+
+### Phase 4D average response time metric per site
+
+- Task name: Phase 4D average response time metric per site
+- What was done: Added average response time metrics for each monitored site. Each site result now includes `average_response_time_ms` and `response_time_window_checks`; the fields are included in the Lambda return output, the S3 `status.json` site payloads, and the DynamoDB result item.
+- Problem faced: Average response time had to be calculated per `site_id` only, include the current check result, skip records without `response_time_ms`, avoid changing uptime percentage behavior, and avoid touching dashboard, alert, content validation, config, or future Phase 4 work.
+- How it was solved:
+  1. Reused the existing recent-result query for the current `site_id`.
+  2. Added a small average response time calculator using `sum(response_time_ms values) / total checks with response_time_ms`.
+  3. Included the current check result plus recent stored records in the calculation.
+  4. Filtered records so only the same `site_id` contributes to the metric.
+  5. Rounded `average_response_time_ms` to the nearest whole number.
+  6. Added `response_time_window_checks` to show how many response-time values were used.
+  7. Attached average response time metrics to the result before writing to DynamoDB.
+  8. Added minimal unit tests for average response time math and same-site filtering.
+  9. Marked the Phase 4 average response time checklist item complete in `TASKS.md`.
+- Final result: Phase 4D is implemented. Multi-site Lambda output and S3 site payloads now report average response time per site, and DynamoDB can store the current result with the new response time metric fields.
+- Next step: Start Phase 4E by adding incident count per site for last 24h and last 7 days.
+
+### Phase 4D average response time AWS validation
+
+- Task name: Phase 4D average response time AWS validation
+- What was done: Deployed the updated Lambda ZIP with Phase 4D average response time code and validated the response time metric fields in AWS Lambda, S3 `status.json`, and DynamoDB.
+- Problem faced: Needed to confirm the new average response time fields were working in the deployed AWS environment for both monitored sites, not only in local code.
+- How it was solved:
+  1. Deployed the updated Lambda ZIP with the Phase 4D average response time code.
+  2. Ran Lambda with the healthy multi-site `SITES_CONFIG`.
+  3. Confirmed Lambda output included `average_response_time_ms` and `response_time_window_checks` for each site.
+  4. Confirmed `example-main` returned `average_response_time_ms=196` and `response_time_window_checks=14`.
+  5. Confirmed `example-second` returned `average_response_time_ms=90` and `response_time_window_checks=12`.
+  6. Checked S3 `status.json` and confirmed `average_response_time_ms` and `response_time_window_checks` appear at the top level and inside the multi-site `sites` array.
+  7. Checked the latest DynamoDB item for `example-main` and confirmed `average_response_time_ms=196` and `response_time_window_checks=14`.
+  8. Checked the latest DynamoDB item for `example-second` and confirmed `average_response_time_ms=90` and `response_time_window_checks=12`.
+- Final result: Phase 4D AWS validation is complete. Average response time and response time window count are confirmed in Lambda output, S3 `status.json`, and DynamoDB for both monitored sites.
+- Next step: Start Phase 4E by adding incident count per site for last 24h and last 7 days.
+
+### Phase 4E incident count per site
+
+- Task name: Phase 4E incident count per site for last 24h and last 7 days
+- What was done: Added incident count metrics for each monitored site. Each site result now includes `incident_count_24h` and `incident_count_7d`; the fields are included in the Lambda return output, the S3 `status.json` site payloads, and the DynamoDB result item.
+- Problem faced: Incident counts had to use only failed checks for the same `site_id`, include the current failed check, use ISO `check_time` values for 24-hour and 7-day windows, and avoid changing recent failures, uptime percentage, average response time, SNS behavior, dashboard files, or future Phase 4 work.
+- How it was solved:
+  1. Added an ISO timestamp parser for stored `check_time` values.
+  2. Added a small incident count calculator for `incident_count_24h` and `incident_count_7d`.
+  3. Used the current check result plus recent stored records from the same `site_id`.
+  4. Counted only records where `is_success` is false.
+  5. Counted a failed check in the 24-hour window when its `check_time` is inside the last 24 hours.
+  6. Counted a failed check in the 7-day window when its `check_time` is inside the last 7 days.
+  7. Attached incident metrics to the result before writing to DynamoDB.
+  8. Added minimal unit tests for window counting and same-site filtering.
+  9. Marked the Phase 4 incident count checklist item complete in `TASKS.md`.
+- Final result: Phase 4E is implemented. Multi-site Lambda output and S3 site payloads now report incident counts per site for the last 24 hours and last 7 days, and DynamoDB can store the current result with the new incident count fields.
+- Next step: Start Phase 4F by adding the consecutive-failure alert threshold.
+
+### Phase 4E incident count AWS validation
+
+- Task name: Phase 4E incident count AWS validation
+- What was done: Deployed the updated Lambda ZIP with Phase 4E incident count code and validated incident count fields in AWS Lambda, S3 `status.json`, and DynamoDB.
+- Problem faced: Needed to confirm incident counts worked in AWS for both healthy sites and a mixed failure case, including existing failed records for the failed site.
+- How it was solved:
+  1. Deployed the updated Lambda ZIP with the Phase 4E incident count code.
+  2. Ran Lambda with the healthy multi-site `SITES_CONFIG`.
+  3. Confirmed the healthy output included `incident_count_24h` and `incident_count_7d` for `example-main` and `example-second`.
+  4. Confirmed `example-main` returned `incident_count_24h=0` and `incident_count_7d=0`.
+  5. Confirmed `example-second` returned `incident_count_24h=0` and `incident_count_7d=0`.
+  6. Ran a mixed failure test with `example-main` healthy and `example-failed` using `https://example.com/not-found-test`.
+  7. Confirmed `example-failed` returned HTTP 404, `is_success=false`, and `failure_reason=HTTP 404: Not Found`.
+  8. Confirmed `example-failed` incident counts increased correctly because earlier failed records already existed.
+  9. Checked S3 `status.json` and confirmed `incident_count_24h` and `incident_count_7d` appear inside the multi-site `sites` array.
+  10. Checked the latest DynamoDB item for `example-failed` and confirmed `incident_count_24h=4` and `incident_count_7d=4`.
+  11. Restored `SITES_CONFIG` back to healthy `example-main` and `example-second`.
+  12. Ran Lambda one final time and confirmed both sites were healthy again.
+- Final result: Phase 4E AWS validation is complete. Healthy sites report zero incidents, the failed site reports the expected 24-hour and 7-day incident counts, and the system is restored to the healthy two-site configuration.
+- Next step: Start Phase 4F by adding the consecutive-failure alert threshold.
+
+### Phase 4F consecutive-failure alert threshold
+
+- Task name: Phase 4F consecutive-failure alert threshold
+- What was done: Added `ALERT_FAILURE_THRESHOLD` with default `2`; calculated `consecutive_failure_count` per `site_id`; added `consecutive_failure_count`, `alert_sent`, and `alert_failure_threshold` to Lambda results, S3 status payloads, and DynamoDB result items; changed SNS publishing to wait until the threshold is reached; added minimal unit tests for consecutive failure counting and alert threshold behavior; marked the Phase 4F checklist item complete in `TASKS.md`.
+- Problem faced: Alerts had to be quieter without changing multi-site config, DynamoDB table keys, recent failures, uptime percentage, average response time, incident counts, content validation, dashboard files, or AWS resource names.
+- How it was solved:
+  1. Read `ALERT_FAILURE_THRESHOLD` from the Lambda environment with a default of `2`.
+  2. Added a same-site consecutive failure counter that includes the current failed check and stops when it reaches the latest successful check.
+  3. Set successful checks to `consecutive_failure_count=0` and `alert_sent=false`.
+  4. Set failed checks to send SNS only when `consecutive_failure_count >= alert_failure_threshold`.
+  5. Added the new alert fields before writing DynamoDB and building the S3 status payload.
+  6. Added tests for same-site counting, success reset behavior through the count boundary, no alert on the first failure, and alert on the second consecutive failure.
+- Final result: Phase 4F is implemented. First failures do not send SNS when `ALERT_FAILURE_THRESHOLD=2`; second consecutive failures for the same `site_id` send SNS and mark `alert_sent=true`.
+- Next step: Start Phase 4G by adding configurable redirect handling.
+
+### Phase 4F consecutive-failure alert threshold AWS validation
+
+- Task name: Phase 4F consecutive-failure alert threshold AWS validation
+- What was done: Deployed the updated Lambda ZIP with Phase 4F consecutive-failure alert threshold code and validated the threshold behavior in AWS.
+- Problem faced: Existing failed records could make alert threshold results unclear, so validation needed a fresh `site_id` with no old failure history.
+- How it was solved:
+  1. Deployed the updated Lambda ZIP with the Phase 4F consecutive-failure alert threshold code.
+  2. Added or confirmed `ALERT_FAILURE_THRESHOLD=2` in the Lambda environment variables.
+  3. Used fresh `site_id=threshold-test` to avoid old failure history.
+  4. Ran the first failing check and confirmed HTTP 404, `consecutive_failure_count=1`, `alert_failure_threshold=2`, and `alert_sent=false`.
+  5. Confirmed no SNS email was expected on the first failure.
+  6. Ran the second same-site failing check and confirmed HTTP 404, `consecutive_failure_count=2`, and `alert_sent=true`.
+  7. Confirmed the SNS alert email was received on the second consecutive failure.
+  8. Ran a healthy reset check for `threshold-test` and confirmed HTTP 200, `is_success=true`, `consecutive_failure_count=0`, and `alert_sent=false`.
+  9. Restored `SITES_CONFIG` back to healthy `example-main` and `example-second`.
+  10. Ran Lambda one final time and confirmed both sites were healthy with `consecutive_failure_count=0` and `alert_sent=false`.
+- Final result: Phase 4F AWS validation is complete. Alert noise is reduced because the first failure does not send SNS when the threshold is 2, while the second consecutive same-site failure does send SNS.
+- Next step: Start Phase 4G by adding configurable redirect handling.
+
+### Phase 4G configurable redirect handling
+
+- Task name: Phase 4G configurable redirect handling
+- What was done: Added optional `redirect_policy` support for both `SITES_CONFIG` and single-site `REDIRECT_POLICY`; kept the default as `follow`; added `fail_on_redirect` behavior for HTTP 301, 302, 303, 307, and 308 responses; added `redirect_policy` and `redirect_detected` fields to Lambda results, S3 status payloads, and DynamoDB result items; added minimal unit tests for redirect policy parsing and redirect failure behavior; marked the Phase 4G checklist item complete in `TASKS.md`.
+- Problem faced: Redirect handling had to become configurable without changing current default `urllib` follow behavior, content validation, uptime percentage, average response time, incident count, consecutive-failure alert threshold, dashboard files, or AWS resource names.
+- How it was solved:
+  1. Added `redirect_policy` normalization with supported values `follow` and `fail_on_redirect`.
+  2. Added `redirect_policy` to normalized per-site config and the single-site fallback environment config.
+  3. Kept `follow` using the existing `urllib` redirect behavior.
+  4. Added a no-redirect opener for `fail_on_redirect` so redirect responses are returned as failures.
+  5. Set redirect failure reason to `Redirect not allowed: HTTP <status_code>`.
+  6. Added `redirect_policy` and `redirect_detected` to result output before the existing metrics, DynamoDB write, status payload, and alert threshold flow.
+  7. Added minimal tests for per-site redirect policy parsing, single-site `REDIRECT_POLICY`, and `fail_on_redirect` behavior.
+- Final result: Phase 4G is implemented. Existing sites still follow redirects by default, and sites can now opt into failing on redirect responses.
+- Next step: Start Phase 4H by adding the response time trend chart using Chart.js on the dashboard.
+
+### Phase 4G configurable redirect handling AWS validation
+
+- Task name: Phase 4G configurable redirect handling AWS validation
+- What was done: Deployed the updated Lambda ZIP with Phase 4G configurable redirect handling code and validated both redirect policies in AWS.
+- Problem faced: Needed to prove the default missing `redirect_policy` behavior still follows redirects while `fail_on_redirect` fails on redirect responses, without confusing the result with old site history or the existing alert threshold behavior.
+- How it was solved:
+  1. Deployed the updated Lambda ZIP with the Phase 4G configurable redirect handling code.
+  2. Tested default missing `redirect_policy` using `redirect-follow-test`.
+  3. Confirmed `redirect-follow-test` used `redirect_policy=follow`, `redirect_detected=true`, final `status_code=200`, `is_success=true`, and `failure_reason=null`.
+  4. Tested `redirect_policy=fail_on_redirect` using `redirect-fail-test`.
+  5. Confirmed `redirect-fail-test` returned `status_code=302`, `is_success=false`, `redirect_detected=true`, and `failure_reason=Redirect not allowed: HTTP 302`.
+  6. Confirmed that because `ALERT_FAILURE_THRESHOLD=2`, the first redirect failure returned `consecutive_failure_count=1` and `alert_sent=false`.
+  7. Restored `SITES_CONFIG` back to healthy `example-main` and `example-second`.
+  8. Ran Lambda one final time and confirmed both sites were healthy with `redirect_policy=follow`, `redirect_detected=false`, `consecutive_failure_count=0`, and `alert_sent=false`.
+- Final result: Phase 4G AWS validation is complete. Default redirect-follow behavior remains unchanged, and `fail_on_redirect` correctly marks redirect responses as failed without sending a first-failure SNS alert under the threshold setting.
+- Next step: Start Phase 4H by adding the response time trend chart using Chart.js on the dashboard.
+
+### Phase 4H response time trend chart
+
+- Task name: Phase 4H response time trend chart using Chart.js on the dashboard
+- What was done: Added Chart.js from a CDN to the dashboard; added one response time trend chart section; plotted latest `response_time_ms` values from existing `status.json` data; supported multi-site payloads with one point per site and single-site payloads with one point; added a clean empty state when no usable response time data is available; marked the Phase 4H checklist item complete in `TASKS.md`.
+- Problem faced: The chart needed to use only the current `status.json` shape, preserve the existing dashboard layout and UP/DOWN cards, and avoid adding DynamoDB/API fetching or changing backend payload generation.
+- How it was solved:
+  1. Added the Chart.js CDN script before `app.js` in `dashboard/index.html`.
+  2. Added a compact chart section with a canvas and empty-state text.
+  3. Added dashboard JavaScript to read `data.sites` when present or fall back to the single-site payload.
+  4. Filtered out sites without numeric `response_time_ms` values and showed the empty state if no points remain.
+  5. Created or updated one Chart.js line chart using site IDs as labels and response times as values.
+  6. Added minimal CSS for the chart card while keeping the existing dashboard theme and layout.
+- Final result: Phase 4H is implemented. The dashboard now shows an MVP response time trend chart based on the latest response time data already present in `status.json`.
+- Next step: Start Phase 4I by improving the dashboard UI for multiple sites.
+
+### Phase 4H response time trend chart live validation
+
+- Task name: Phase 4H response time trend chart live validation
+- What was done: Uploaded the updated `dashboard/index.html`, `dashboard/app.js`, and `dashboard/style.css` to S3 and validated the live dashboard.
+- Problem faced: Needed to confirm the Chart.js section worked on the live S3 dashboard without breaking existing status, content check, recent failures, or layout behavior.
+- How it was solved:
+  1. Uploaded the updated dashboard files to S3.
+  2. Opened the live S3 dashboard.
+  3. Confirmed the Response Time Trend chart appears.
+  4. Confirmed the chart uses existing `status.json` data.
+  5. Confirmed the chart shows one point for `example-main` and one point for `example-second`.
+  6. Confirmed the existing UP status display still works.
+  7. Confirmed Content Check still displays correctly.
+  8. Confirmed Recent Failures still displays correctly.
+  9. Confirmed the dashboard layout is not broken.
+- Final result: Phase 4H live validation is complete. The dashboard now shows the MVP response time chart from `status.json`; this is latest response time per site, not a historical trend, because the dashboard only reads `status.json`.
+- Next step: Start Phase 4I by improving the dashboard UI for multiple sites.
+
+### Phase 4I multiple-site dashboard UI
+
+- Task name: Phase 4I improve dashboard UI for multiple sites
+- What was done: Added a multi-site dashboard section that appears when `status.json` contains a `sites` array; added overall site totals for total, UP, and DOWN sites; added one readable card per monitored site with the key monitoring fields; kept single-site dashboard behavior, Response Time Trend chart, and Recent Failures working; marked the Phase 4I checklist item complete in `TASKS.md`.
+- Problem faced: The dashboard needed to show multi-site data clearly without changing the backend `status.json` structure, removing the existing main status cards, breaking the chart, or redesigning the full dashboard.
+- How it was solved:
+  1. Added a hidden multi-site section in `dashboard/index.html`.
+  2. Added summary cards for total sites, UP sites, and DOWN sites.
+  3. Added JavaScript that detects `data.sites` and renders the multi-site panel only for multi-site payloads.
+  4. Added one site card per item in `sites`, including status, URL, HTTP status, response time, content check, uptime, average response time, incident counts, consecutive failures, alert sent, redirect policy, and redirect detected.
+  5. Displayed `failure_reason` only on failed site cards.
+  6. Preserved the single-site view by hiding the multi-site panel when `sites` is missing.
+  7. Added minimal responsive CSS for the summary and site cards while keeping the current cream/green dashboard theme.
+- Final result: Phase 4I is implemented. The dashboard now clearly supports multiple monitored sites using the existing `status.json` `sites` array, while remaining backward-compatible with single-site payloads.
+- Next step: Start Phase 4J by adding a DynamoDB TTL attribute to expire old records.
+
+### Phase 4I multi-site dashboard UI live validation
+
+- Task name: Phase 4I multi-site dashboard UI live validation
+- What was done: Uploaded the updated `dashboard/index.html`, `dashboard/app.js`, and `dashboard/style.css` to S3 and validated the live multi-site dashboard UI.
+- Problem faced: Needed to confirm the new multi-site section worked on the live S3 dashboard without breaking the chart, recent failures, existing theme, or layout.
+- How it was solved:
+  1. Uploaded the updated dashboard files to S3.
+  2. Opened the live S3 dashboard.
+  3. Confirmed the multi-site dashboard section appears.
+  4. Confirmed summary cards show total sites 2, UP sites 2, and DOWN sites 0.
+  5. Confirmed a per-site card appears for `example-main`.
+  6. Confirmed a per-site card appears for `example-second`.
+  7. Confirmed site cards show key metrics including HTTP status, response time, content check, uptime, average response, incident counts, consecutive failures, alert sent, redirect policy, and redirect seen.
+  8. Confirmed the Response Time Trend chart still works.
+  9. Confirmed the Recent Failures section still works.
+  10. Confirmed the dashboard theme and layout remain clean.
+- Final result: Phase 4I live validation is complete. The live S3 dashboard now clearly presents the two healthy monitored sites and their per-site metrics without breaking the existing chart or failure history sections.
+- Next step: Start Phase 4J by adding a DynamoDB TTL attribute to expire old records.
+
+### Phase 4J DynamoDB TTL attribute
+
+- Task name: Phase 4J DynamoDB TTL attribute to expire old records
+- What was done: Added `RETENTION_DAYS` with default `30`; added `ttl_expires_at` to each new check result; included `ttl_expires_at` in the DynamoDB item, Lambda return output, and S3 `status.json` site payload; added minimal unit tests for TTL timestamp calculation and invalid `RETENTION_DAYS` fallback; marked the Phase 4J checklist item complete in `TASKS.md`.
+- Problem faced: TTL needed to be added to new records only without changing DynamoDB table keys, enabling TTL from code, changing existing records, or affecting content validation, recent failures, metrics, alert threshold, redirect handling, dashboard files, or AWS resources.
+- How it was solved:
+  1. Added a safe positive-integer parser for environment values.
+  2. Read `RETENTION_DAYS` from the Lambda environment and fell back to `30` when missing, empty, invalid, or non-positive.
+  3. Calculated `ttl_expires_at` from the current `check_time` plus the retention period.
+  4. Stored `ttl_expires_at` on the result before the existing DynamoDB write and status payload build.
+  5. Reused the existing DynamoDB write flow so the TTL attribute is included cleanly in new current result items.
+  6. Added focused tests for retention fallback and deterministic TTL epoch calculation.
+- Final result: Phase 4J is implemented. New check records now carry a Unix epoch `ttl_expires_at` value that can be used when DynamoDB TTL is enabled manually.
+- Next step: Phase 4J AWS validation: deploy Lambda, set or confirm `RETENTION_DAYS`, run Lambda, confirm `ttl_expires_at` appears in DynamoDB, then enable TTL manually on the DynamoDB table using `ttl_expires_at`.
+
+### Phase 4J DynamoDB TTL AWS validation
+
+- Task name: Phase 4J DynamoDB TTL AWS validation
+- What was done: Deployed the updated Lambda ZIP with Phase 4J TTL code, validated `ttl_expires_at` in Lambda output and DynamoDB, and manually enabled DynamoDB TTL.
+- Problem faced: Needed to confirm the TTL attribute was present on new records in AWS and then enable DynamoDB TTL manually without changing code or AWS resource names from Lambda.
+- How it was solved:
+  1. Deployed the updated Lambda ZIP with the Phase 4J TTL code.
+  2. Added or confirmed `RETENTION_DAYS=30` in the Lambda environment variables.
+  3. Ran Lambda with the healthy multi-site `SITES_CONFIG`.
+  4. Confirmed Lambda output included `ttl_expires_at` for `example-main` and `example-second`.
+  5. Confirmed the `ttl_expires_at` value was `1780675263` in Lambda output.
+  6. Checked the latest DynamoDB item for `example-main` and confirmed `ttl_expires_at=1780675263`.
+  7. Checked the latest DynamoDB item for `example-second` and confirmed `ttl_expires_at=1780675263`.
+  8. Manually enabled DynamoDB TTL on table `website_checks` using `ttl_expires_at` as the TTL attribute.
+  9. Confirmed in the AWS console that TTL status is On.
+  10. Confirmed in the AWS console that the TTL attribute is `ttl_expires_at`.
+- Final result: Phase 4J AWS validation is complete. New records include the TTL attribute, and DynamoDB TTL is enabled on `website_checks`; expired item deletion is not immediate and AWS may remove expired items later.
+- Next step: Review Phase 4 checklist and decide whether to close Phase 4 or add a final Phase 4 summary.
+
+### Phase 4 final checklist review and completion summary
+
+- Task name: Phase 4 final checklist review and completion summary
+- What was done: Reviewed the Phase 4 checklist against completed work already recorded in `PROGRESS.md`.
+- Problem faced: Needed to confirm Phase 4 could be closed based only on recorded implementation and validation notes.
+- How it was solved:
+  1. Confirmed multi-site monitoring was implemented and validated in AWS.
+  2. Confirmed uptime percentage per site was implemented and validated in AWS.
+  3. Confirmed average response time per site was implemented and validated in AWS.
+  4. Confirmed incident counts per site for the last 24 hours and last 7 days were implemented and validated in AWS.
+  5. Confirmed consecutive-failure alert threshold was implemented and validated in AWS.
+  6. Confirmed configurable redirect handling was implemented and validated in AWS.
+  7. Confirmed the Chart.js response time chart was implemented and live-validated on the S3 dashboard.
+  8. Confirmed the multi-site dashboard UI was implemented and live-validated on the S3 dashboard.
+  9. Confirmed the DynamoDB TTL attribute was implemented, validated in AWS, and enabled on `website_checks`.
+- Final result: Phase 4 is complete. All listed Phase 4 improvement items are checked in `TASKS.md` and have matching recorded implementation or validation notes in `PROGRESS.md`.
+- Next step: Start Phase 5 final portfolio refresh / README update.
+
 ## Ongoing Rule
 
 After every future project task, update `PROGRESS.md` with task completed, problems faced, solution steps, final result, and next step.
 
 ## Next Step
 
-- Review final README, then merge phase-5-portfolio-polish into main and push.
+- Start Phase 5 final portfolio refresh / README update.
