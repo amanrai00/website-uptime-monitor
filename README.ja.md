@@ -3,6 +3,8 @@
 [English version here](README.md)
 
 > サーバーレスAWS監視エンジン。稼働確認、コンテンツ検証、障害アラート、静的ダッシュボードへのステータス公開を実現します。サーバー不要。運用コストはほぼゼロ。
+>
+> **[ライブダッシュボード →](https://amanrai00-uptime-dashboard.s3.ap-northeast-1.amazonaws.com/index.html)**
 
 ![アーキテクチャ](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/architecture.ja.png.PNG)
 
