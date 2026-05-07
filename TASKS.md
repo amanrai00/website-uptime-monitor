@@ -50,7 +50,7 @@ website-uptime-monitor/
   - [x] `sns:Publish` on `uptime-alerts` topic ARN only
   - [x] `s3:PutObject` on dashboard bucket ARN, key `status.json` only — use a placeholder ARN now (`arn:aws:s3:::PLACEHOLDER_BUCKET_NAME/status.json`); update to the real bucket ARN in Phase 2.1 once the bucket is created
   - [x] `logs:CreateLogGroup`, `logs:CreateLogStream`, `logs:PutLogEvents` for CloudWatch
-- [ ] Verify no broader permissions are attached (no `*` actions, no `*` resources)
+- [x] Verify no broader permissions are attached (no `*` actions, no `*` resources)
 
 ### 1.2 DynamoDB Table
 
@@ -275,6 +275,7 @@ Then build:
 - [x] Add known limitations section to README
 - [x] Add lessons learned section
 - [x] Add future improvements section referencing Phase 4 items
+- [x] Add live demo URL
 - [ ] Record a short demo GIF or screen recording of the full flow
 
 -----
