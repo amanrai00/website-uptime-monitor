@@ -298,7 +298,7 @@ Core application permissions are scoped to specific resources. DynamoDB, SNS, an
 
 ---
 
-## 🛣️ Roadmap
+## Roadmap
 
 - [ ] CloudWatch alarm for silent Lambda failure (dead-man's switch)
 - [ ] Per-site alert threshold configuration
