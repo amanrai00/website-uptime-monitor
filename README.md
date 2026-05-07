@@ -3,6 +3,8 @@
 [日本語版はこちら](README.ja.md)
 
 > Serverless AWS monitoring engine that checks uptime, validates content, alerts on failure, and publishes live status to a static dashboard. Zero servers. Near-zero cost.
+>
+> **[Live Dashboard →](https://amanrai00-uptime-dashboard.s3.ap-northeast-1.amazonaws.com/index.html)**
 
 ![Architecture](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/architecture.png.PNG)
 
