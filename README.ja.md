@@ -36,7 +36,7 @@ HTTP 200 ≠ サイト正常。CloudFrontのエラーページ、メンテナン
 
 <div align="center">
 
-![Architecture](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/architecture.png.PNG)
+![Architecture](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/architecture.ja.png.PNG)
 
 </div>
 
