@@ -278,7 +278,7 @@ website_checks
 | `s3:PutObject` | `<bucket>/status.json` only |
 | CloudWatch Logs | Lambda execution logs only |
 
-No wildcards. Each service scoped to a single ARN.
+Core application permissions are scoped to specific resources. DynamoDB, SNS, and S3 access are limited to the required table, topic, and `status.json` object. CloudWatch Logs permissions are limited to Lambda logging.
 
 ---
 
