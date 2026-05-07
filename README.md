@@ -136,7 +136,7 @@ Per-site metrics every run:
 
 ## Cost
 
-**Near $0/month.**
+**Expected cost is **near $0/month** for personal use.**
 
 | Resource | Monthly volume | Free Tier? |
 |---|---|---|
