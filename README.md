@@ -1,132 +1,160 @@
-# Website Uptime Monitor
+<div align="center">
 
-[日本語版はこちら](README.ja.md)
+# 🛰️ Website Uptime Monitor
 
-> Serverless AWS monitoring engine that checks uptime, validates content, alerts on failure, and publishes live status to a static dashboard. Zero servers. Near-zero cost.
+### Serverless AWS monitoring. Built solo. Running in production.
 
-> **[Live Dashboard →](https://amanrai00-uptime-dashboard.s3.ap-northeast-1.amazonaws.com/index.html)**
+[![Live Dashboard](https://img.shields.io/badge/🟢_Live_Dashboard-Open-2ea44f?style=for-the-badge)](https://amanrai00-uptime-dashboard.s3.ap-northeast-1.amazonaws.com/index.html)
+[![日本語版](https://img.shields.io/badge/日本語版-README.ja.md-red?style=for-the-badge)](README.ja.md)
+
+![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=flat&logo=amazon-aws&logoColor=white)
+![Lambda](https://img.shields.io/badge/AWS_Lambda-FF9900?style=flat&logo=awslambda&logoColor=white)
+![DynamoDB](https://img.shields.io/badge/DynamoDB-4053D6?style=flat&logo=amazondynamodb&logoColor=white)
+![S3](https://img.shields.io/badge/Amazon_S3-569A31?style=flat&logo=amazons3&logoColor=white)
+![Python](https://img.shields.io/badge/Python_3.12-3776AB?style=flat&logo=python&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat)
+
+---
+
+**Lambda checks every 5 min → validates content (not just HTTP 200) → DynamoDB stores → S3 dashboard renders → SNS alerts on consecutive failures.**
+
+No EC2. No API Gateway. No idle compute. ~$0/month.
+
+</div>
+
+---
+
+## 🎯 The Problem This Solves
+
+HTTP 200 ≠ working site. CloudFront error pages, broken deploys, maintenance placeholders all return 200. Basic uptime checks miss them.
+
+This monitor validates **content**, not just **status codes**.
+
+---
+
+## 🏗️ Architecture
+
+<div align="center">
 
 ![Architecture](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/architecture.png.PNG)
 
------
-
-## What This Does
-
-Every 5 minutes, a Lambda function wakes up, hits every configured target URL, and makes four decisions per site:
-
-1. Did it respond at all?
-1. Did it respond fast enough?
-1. Does the page contain the content it should?
-1. Does the page contain content it shouldn't?
-
-Results go to DynamoDB. If a site fails consecutively, an SNS email fires. The latest status overwrites a single `status.json` file on S3, which a static dashboard reads on load. No API Gateway. No servers to maintain.
-
------
-
-## Dashboard
-
-|Multi-Site Dashboard|DOWN State|
-|---|---|
-|![UP](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/dashboard-up.png)|![DOWN](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/dashboard-down.png)|
-
-|DynamoDB Check History|SNS Alert Email|
-|---|---|
-|![DynamoDB](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/dynamodb-results.png)|![SNS](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/sns-alert-email.png)|
-
------
-
-## How It Works
+</div>
 
 ```
-EventBridge (every 5 min)
-        │
-        ▼
-   Lambda Function
-   ┌──────────────────────────────────────┐
-   │  For each configured site:           │
-   │  HTTP GET → target URL               │
-   │  ✓ Status code 2xx?                  │
-   │  ✓ Response time < threshold?        │
-   │  ✓ Expected text present?            │
-   │  ✓ Forbidden text absent?            │
-   │  ✓ Alert threshold reached?          │
-   └──────────────────────────────────────┘
-        │                   │
-        ▼                   ▼
-   DynamoDB            S3 status.json ──→ Static Dashboard
-   (full history)
-        │
-        ▼  on consecutive failure threshold only
-   SNS Email Alert
+EventBridge (5 min) ──► Lambda ──┬──► DynamoDB (history)
+                                  ├──► S3 status.json ──► Static Dashboard
+                                  └──► SNS Email (after N consecutive fails)
 ```
 
-**Why this stack:**
-
-- **Lambda over EC2:** runs only on schedule, no idle compute, no patching
-- **DynamoDB over RDS:** append-only timestamped writes with no schema to maintain
-- **S3 `status.json` over API Gateway:** dashboard reads one static file; no backend to operate
-- **SNS over custom email:** email alerts after the failure threshold is reached; delivery handled by AWS, zero infrastructure
-
------
-
-## Failure Detection
-
-A check fails if any of these are true, evaluated in order:
-
-| Rule | Condition |
+| Decision | Why |
 |---|---|
-| Network error | Connection refused, DNS failure, timeout |
-| Bad status code | HTTP response outside 200–299 |
-| Slow response | Response time exceeds `RESPONSE_THRESHOLD_MS` |
-| Missing content | `EXPECTED_TEXT` set but not found in response body |
-| Forbidden content | `FORBIDDEN_TEXT` set and found in response body |
-| Redirect blocked | `redirect_policy` set to `fail_on_redirect` and redirect detected |
+| **Lambda over EC2** | Schedule-only execution, zero idle compute, zero patching |
+| **DynamoDB over RDS** | Append-only timestamped writes, no schema migrations |
+| **S3 `status.json` over API Gateway** | One static file, no backend, no cold starts |
+| **SNS over custom mail** | AWS handles delivery, zero infra to operate |
+| **Consecutive-fail threshold** | Single transient failure ≠ alert. Trust preserved. |
 
-Content validation is the key addition over basic uptime checks. A maintenance page or broken deployment can still return HTTP 200. Checking for expected text catches what status codes miss.
+---
 
------
+## 📸 Screenshots
 
-## Alerting
+<table>
+  <tr>
+    <td align="center"><b>Dashboard — Healthy</b></td>
+    <td align="center"><b>Dashboard — DOWN State</b></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/dashboard-up.png" /></td>
+    <td><img src="https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/dashboard-down.png" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>DynamoDB Check History</b></td>
+    <td align="center"><b>SNS Alert Email</b></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/dynamodb-results.png" /></td>
+    <td><img src="https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/sns-alert-email.png" /></td>
+  </tr>
+</table>
 
-Alerts use a consecutive-failure threshold before sending SNS. The default threshold is 2.
+---
 
-- First failure: logged and tracked, no alert sent
-- Second consecutive failure: SNS email fires with site URL, failure reason, status code, response time, and timestamp
-- Recovery: consecutive failure count resets to 0
+## 🧠 What I Learned Building This
 
-This reduces alert noise from single transient failures while still catching real outages.
+> **HTTP 200 lies.** Content validation became the most useful feature. Maintenance pages return 200 every time.
 
------
+> **`status.json` and DynamoDB silently diverged.** Dashboard showed DOWN, `recent_failures` stayed empty. Lambda queried historical records but didn't inject the *current* failed check into the S3 payload. Fix: write current result first → query DynamoDB for older → dedupe by `check_time` → keep latest 5. Bug only surfaces when you actually run the system.
 
-## Multi-Site Monitoring
+> **IAM least-privilege scope is a thinking exercise.** Forcing each permission to a specific ARN (DynamoDB table, SNS topic, single S3 key) clarified what each service genuinely needs. Discipline carries to production.
 
-Multiple sites can be monitored in a single Lambda run using the `SITES_CONFIG` environment variable. Each site gets its own `site_id` in DynamoDB. All results share one table.
+> **Alert noise erodes trust faster than missed alerts.** A single transient failure firing email trains operators to ignore alerts. Threshold of 2 = trustworthy.
 
-Per-site metrics tracked on every run:
+> **Static S3 beats API Gateway for read-only dashboards.** No cold starts on read. Tradeoff: dashboard freshness = last Lambda run (5 min). Acceptable for this use case.
 
-- Uptime percentage
-- Average response time
-- Incident count for last 24h and last 7 days
+---
+
+## ⚙️ Failure Detection Logic
+
+Evaluated in order. First match wins.
+
+| # | Rule | Trigger Condition |
+|---|---|---|
+| 1 | Network error | Connection refused / DNS failure / timeout |
+| 2 | Bad status code | HTTP outside 200–299 |
+| 3 | Slow response | Time > `RESPONSE_THRESHOLD_MS` |
+| 4 | Missing content | `EXPECTED_TEXT` set but absent in body |
+| 5 | Forbidden content | `FORBIDDEN_TEXT` set and present in body |
+| 6 | Redirect blocked | `redirect_policy=fail_on_redirect` and redirect detected |
+
+---
+
+## 🔔 Alerting Flow
+
+```
+Failure #1  →  Logged to DynamoDB. No email.
+Failure #2  →  SNS email fires (URL, reason, status, response time, timestamp)
+Recovery    →  consecutive_failure_count resets to 0
+```
+
+Default threshold: **2**. Configurable via `ALERT_FAILURE_THRESHOLD`.
+
+---
+
+## 🌐 Multi-Site Monitoring
+
+One Lambda run → many sites. Each gets its own `site_id` in DynamoDB. One shared table.
+
+Per-site metrics every run:
+- Uptime %
+- Avg response time
+- Incident count (24h / 7d)
 - Consecutive failure count
-- Alert sent status
-- Redirect policy and redirect detected
+- Alert sent flag
+- Redirect policy + detection
 
------
+---
 
-## Cost
+## 💰 Cost
 
-Expected cost is **near $0/month** for personal use.
+**Near $0/month.**
 
-At 5-minute intervals: ~8,640 Lambda executions per month, ~8,640 DynamoDB writes per site, one `status.json` file (~1KB) overwritten each run. For this personal demo workload, the usage is far below typical Free Tier thresholds. SNS email alerts only fire on consecutive failures, keeping that usage minimal.
+| Resource | Monthly volume | Free Tier? |
+|---|---|---|
+| Lambda invocations | ~8,640 | ✅ Well under |
+| DynamoDB writes | ~8,640 per site | ✅ On-demand, well under |
+| S3 PUT (`status.json`) | ~8,640 (~1KB each) | ✅ Well under |
+| SNS email | Only on consecutive fails | ✅ Negligible |
 
-Cost stays low because: no always-on compute, S3 static dashboard instead of a hosted server, DynamoDB on-demand billing, Lambda runs only on schedule.
+No always-on compute. Schedule-only.
 
------
+---
 
-## Setup
+## 🚀 Setup
+
+<details>
+<summary><b>Click to expand deployment guide</b></summary>
 
 ### Prerequisites
-
 - AWS account
 - Python 3.12+
 - Region: `ap-northeast-1`
@@ -140,31 +168,29 @@ Cost stays low because: no always-on compute, S3 static dashboard instead of a h
 | IAM role | `uptime-monitor-lambda-role` |
 | Lambda function | `website-uptime-check` |
 | EventBridge rule | `uptime-check-every-5-min` |
-| S3 bucket | globally unique name of your choice |
+| S3 bucket | globally unique name |
 
-### Lambda Environment Variables
-
-**Single-site configuration:**
+### Environment Variables (Single-Site)
 
 | Variable | Description | Default |
 |---|---|---|
 | `TARGET_URL` | URL to monitor | required |
 | `TIMEOUT_SECONDS` | Request timeout | `10` |
-| `RESPONSE_THRESHOLD_MS` | Max acceptable response time (ms) | `3000` |
+| `RESPONSE_THRESHOLD_MS` | Max acceptable response time | `3000` |
 | `SNS_TOPIC_ARN` | ARN for failure alerts | required |
 | `DYNAMODB_TABLE` | Table name | `website_checks` |
-| `S3_BUCKET` | Dashboard bucket name | required for dashboard |
-| `S3_STATUS_KEY` | Key for status file | `status.json` |
-| `SITE_ID` | Identifier stored with each check | `my-portfolio` |
-| `EXPECTED_TEXT` | Text that must appear in response body | optional |
-| `FORBIDDEN_TEXT` | Text that must not appear in response body | optional |
-| `ALERT_FAILURE_THRESHOLD` | Consecutive failures before SNS alert | `2` |
-| `RETENTION_DAYS` | DynamoDB TTL retention period in days | `30` |
+| `S3_BUCKET` | Dashboard bucket | required |
+| `S3_STATUS_KEY` | Status file key | `status.json` |
+| `SITE_ID` | Identifier per check | `my-portfolio` |
+| `EXPECTED_TEXT` | Must appear in body | optional |
+| `FORBIDDEN_TEXT` | Must NOT appear in body | optional |
+| `ALERT_FAILURE_THRESHOLD` | Consecutive fails before alert | `2` |
+| `RETENTION_DAYS` | DynamoDB TTL | `30` |
 | `REDIRECT_POLICY` | `follow` or `fail_on_redirect` | `follow` |
 
-**Multi-site configuration:**
+### Multi-Site (`SITES_CONFIG`)
 
-Set `SITES_CONFIG` as a JSON array. When present, it takes priority over single-site variables.
+JSON array. Takes priority over single-site vars.
 
 ```json
 [
@@ -179,9 +205,7 @@ Set `SITES_CONFIG` as a JSON array. When present, it takes priority over single-
   },
   {
     "site_id": "second-site",
-    "target_url": "https://example.org",
-    "timeout_seconds": 10,
-    "response_threshold_ms": 3000
+    "target_url": "https://example.org"
   }
 ]
 ```
@@ -189,37 +213,37 @@ Set `SITES_CONFIG` as a JSON array. When present, it takes priority over single-
 ### Deploy
 
 ```bash
-# Package Lambda
 cd lambda
 zip -r ../lambda-deploy.zip .
 
-# Upload to Lambda
 aws lambda update-function-code \
   --function-name website-uptime-check \
   --zip-file fileb://../lambda-deploy.zip
 
-# Upload dashboard to S3
 aws s3 sync dashboard/ s3://your-bucket-name/
 ```
 
-### Validate
+### Validation Tests
 
-Run these manual Lambda tests before relying on the schedule:
+- ✅ Healthy URL → `is_success: true`, no SNS
+- ✅ Broken URL → `is_success: false`, SNS after 2 fails
+- ✅ Low `RESPONSE_THRESHOLD_MS` → slow response detected
+- ✅ Mismatched `EXPECTED_TEXT` → content failure on HTTP 200
+- ✅ `SITES_CONFIG` multi → separate items per `site_id`
 
-- Healthy URL → `is_success: true` in DynamoDB, no SNS alert sent
-- Broken URL → `is_success: false` in DynamoDB, SNS email received after 2 consecutive failures
-- Low `RESPONSE_THRESHOLD_MS` → slow response detected, `is_success: false`
-- Mismatched `EXPECTED_TEXT` → content failure on HTTP 200, `is_success: false`
-- `SITES_CONFIG` with multiple sites → separate DynamoDB items per `site_id`
+</details>
 
------
+---
 
-## DynamoDB Schema
+## 🗂️ DynamoDB Schema
+
+<details>
+<summary><b>Click to expand</b></summary>
 
 ```
 website_checks
-├── site_id                  (partition key)
-├── check_time               (sort key, ISO 8601)
+├── site_id                       (partition key)
+├── check_time                    (sort key, ISO 8601)
 ├── url
 ├── status_code
 ├── response_time_ms
@@ -240,11 +264,11 @@ website_checks
 └── ttl_expires_at
 ```
 
------
+</details>
 
-## IAM Policy (least privilege)
+---
 
-The Lambda role is granted exactly what it needs:
+## 🔒 IAM (Least Privilege)
 
 | Permission | Scope |
 |---|---|
@@ -252,55 +276,37 @@ The Lambda role is granted exactly what it needs:
 | `dynamodb:Query` | `website_checks` ARN only |
 | `sns:Publish` | `uptime-alerts` ARN only |
 | `s3:PutObject` | `<bucket>/status.json` only |
-| CloudWatch Logs write | Lambda execution logs |
+| CloudWatch Logs | Lambda execution logs only |
 
-No broad application permissions. DynamoDB, SNS, and S3 are each scoped to a specific ARN.
+No wildcards. Each service scoped to a single ARN.
 
------
+---
 
-## CloudWatch Logs
+## 📊 CloudWatch Logs
 
 ![CloudWatch](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/cloudwatch-logs.png)
 
------
+---
 
-## Known Limitations
+## ⚠️ Known Limitations
 
-- Dashboard reflects the last `status.json` write, not a live stream. Staleness is visible via the last-checked timestamp.
-- No dashboard authentication, which is acceptable for a public portfolio demo but not for production.
-- If Lambda or EventBridge stops running silently, there is no dead-man's switch. A CloudWatch alarm on invocation count would catch this.
-- The consecutive-failure alert threshold is a single global value. It applies to all monitored sites and is not configurable per site.
-- The dashboard chart shows the latest response time per site, not a full historical trend, because it reads only the current `status.json` payload.
+- Dashboard reflects last `status.json` write, not live stream. Staleness visible via timestamp.
+- No dashboard auth. Acceptable for portfolio, not production.
+- No dead-man's switch if Lambda/EventBridge stop silently. CloudWatch alarm on invocation count would catch this.
+- Single global alert threshold. Not per-site configurable yet.
+- Dashboard chart shows latest response time per site, not historical trend (reads only current `status.json`).
 
------
+---
 
-## Lessons Learned
+## 🛣️ Roadmap
 
-**HTTP 200 is not enough.** A CloudFront error page, maintenance placeholder, or broken deployment can all return 200. Content validation catches what status codes miss, and that is the real value of Phase 3.
+- [ ] CloudWatch alarm for silent Lambda failure (dead-man's switch)
+- [ ] Per-site alert threshold configuration
+- [ ] Terraform / AWS SAM for IaC deployment
 
-**`status.json` and DynamoDB can silently diverge.** The dashboard showed DOWN, but `recent_failures` stayed empty because Lambda was querying historical DynamoDB records but not injecting the current failed check into the S3 payload. Fix: write the current check result directly into `recent_failures` first, query DynamoDB for older failures, deduplicate by `check_time`, keep the latest 5.
+---
 
-**Static S3 beats API Gateway for a read-only dashboard.** One file, no backend, no cold starts on the read path. The only tradeoff is the 5-minute polling interval. The dashboard is as fresh as the last Lambda run.
-
-**IAM scope matters even in personal projects.** Scoping permissions to specific ARNs forced a clear understanding of what each service actually needs, and that thinking comes up directly in systems design interviews.
-
-**Alert noise is a real problem at scale.** A single transient failure firing an SNS email trains you to ignore alerts. Adding a consecutive-failure threshold before alerting is a small change that makes the system significantly more trustworthy.
-
------
-
-## What I'd Build Next
-
-- CloudWatch alarm if Lambda stops executing silently
-- Multi-region monitoring for latency comparison across regions
-- API Gateway for real-time dashboard data when the 5-minute polling interval is no longer acceptable
-- Authenticated page checks for pages behind a login
-- Per-site alert threshold configuration instead of one global value
-- Public-facing status page separate from the internal dashboard
-- Terraform or AWS SAM for infrastructure-as-code deployment
-
------
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 website-uptime-monitor/
@@ -318,19 +324,14 @@ website-uptime-monitor/
     └── screenshots/
 ```
 
------
+---
 
-## Interview Topics
+<div align="center">
 
-Questions this project is designed to answer:
+### Built by [Aman Rai](https://www.linkedin.com/in/amanrai00) · Tokyo
 
-- Why Lambda over a cron job on EC2?
-- Why DynamoDB over RDS for monitoring data?
-- Why `status.json` on S3 instead of API Gateway?
-- What does the IAM policy allow and why nothing broader?
-- How is `response_time_ms` measured and what does it represent?
-- What does content validation catch that HTTP status codes miss?
-- What happens if Lambda stops running silently?
-- How would you extend this to monitor 50 sites?
-- Why use a consecutive-failure threshold before alerting?
-- How does multi-site monitoring work with a single DynamoDB table?
+**AWS Certified Cloud Practitioner** · Studying for SAA-C03 · Building toward Cloud Engineering
+
+[LinkedIn](https://www.linkedin.com/in/amanrai00) · [GitHub](https://github.com/amanrai00) · [AWS Badge](https://www.credly.com/badges/095a2b8e-c94f-4af6-b77c-51ec2fa64d56)
+
+</div>
