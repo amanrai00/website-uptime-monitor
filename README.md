@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛰️ Website Uptime Monitor
+# Website Uptime Monitor
 
 ### Serverless AWS monitoring. Built solo. Running in production.
 
@@ -24,7 +24,7 @@ No EC2. No API Gateway. No idle compute. ~$0/month.
 
 ---
 
-## 🎯 The Problem This Solves
+## The Problem This Solves
 
 HTTP 200 ≠ working site. CloudFront error pages, broken deploys, maintenance placeholders all return 200. Basic uptime checks miss them.
 
@@ -32,7 +32,7 @@ This monitor validates **content**, not just **status codes**.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 <div align="center">
 
@@ -56,7 +56,7 @@ EventBridge (5 min) ──► Lambda ──┬──► DynamoDB (history)
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 <table>
   <tr>
@@ -79,7 +79,7 @@ EventBridge (5 min) ──► Lambda ──┬──► DynamoDB (history)
 
 ---
 
-## 🧠 What I Learned Building This
+## What I Learned Building This
 
 > **HTTP 200 lies.** Content validation became the most useful feature. Maintenance pages return 200 every time.
 
@@ -93,7 +93,7 @@ EventBridge (5 min) ──► Lambda ──┬──► DynamoDB (history)
 
 ---
 
-## ⚙️ Failure Detection Logic
+## Failure Detection Logic
 
 Evaluated in order. First match wins.
 
@@ -108,7 +108,7 @@ Evaluated in order. First match wins.
 
 ---
 
-## 🔔 Alerting Flow
+## Alerting Flow
 
 ```
 Failure #1  →  Logged to DynamoDB. No email.
@@ -120,7 +120,7 @@ Default threshold: **2**. Configurable via `ALERT_FAILURE_THRESHOLD`.
 
 ---
 
-## 🌐 Multi-Site Monitoring
+## Multi-Site Monitoring
 
 One Lambda run → many sites. Each gets its own `site_id` in DynamoDB. One shared table.
 
@@ -134,7 +134,7 @@ Per-site metrics every run:
 
 ---
 
-## 💰 Cost
+## Cost
 
 **Near $0/month.**
 
@@ -149,7 +149,7 @@ No always-on compute. Schedule-only.
 
 ---
 
-## 🚀 Setup
+## Setup
 
 <details>
 <summary><b>Click to expand deployment guide</b></summary>
@@ -235,7 +235,7 @@ aws s3 sync dashboard/ s3://your-bucket-name/
 
 ---
 
-## 🗂️ DynamoDB Schema
+## DynamoDB Schema
 
 <details>
 <summary><b>Click to expand</b></summary>
@@ -268,7 +268,7 @@ website_checks
 
 ---
 
-## 🔒 IAM (Least Privilege)
+## IAM (Least Privilege)
 
 | Permission | Scope |
 |---|---|
@@ -288,7 +288,7 @@ Core application permissions are scoped to specific resources. DynamoDB, SNS, an
 
 ---
 
-## ⚠️ Known Limitations
+## Known Limitations
 
 - Dashboard reflects last `status.json` write, not live stream. Staleness visible via timestamp.
 - No dashboard auth. Acceptable for portfolio, not production.
@@ -306,7 +306,7 @@ Core application permissions are scoped to specific resources. DynamoDB, SNS, an
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 website-uptime-monitor/
