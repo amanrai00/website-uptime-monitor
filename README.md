@@ -282,7 +282,7 @@ Core application permissions are scoped to specific resources. DynamoDB, SNS, an
 
 ---
 
-## 📊 CloudWatch Logs
+## CloudWatch Logs
 
 ![CloudWatch](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/cloudwatch-logs.png)
 
