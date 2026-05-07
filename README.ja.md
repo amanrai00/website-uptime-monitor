@@ -278,7 +278,7 @@ website_checks
 | `s3:PutObject` | `<bucket>/status.json`のみ |
 | CloudWatch Logs | Lambda実行ログのみ |
 
-ワイルドカードなし。各サービスを単一ARNにスコープ。
+アプリケーションの主要な権限は特定のリソースにスコープしています。DynamoDB・SNS・S3は、対象のテーブル・トピック・`status.json`オブジェクトに限定。CloudWatch Logsの権限はLambdaのログ出力に限定しています。
 
 ---
 
