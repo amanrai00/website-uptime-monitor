@@ -282,7 +282,7 @@ website_checks
 
 ---
 
-## 📊 CloudWatchログ
+## CloudWatchログ
 
 ![CloudWatch](https://raw.githubusercontent.com/amanrai00/website-uptime-monitor/main/docs/screenshots/cloudwatch-logs.png)
 
